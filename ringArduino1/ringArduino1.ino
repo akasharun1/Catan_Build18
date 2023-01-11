@@ -42,42 +42,6 @@ char encoderRotaryState;
 char sevenSegVal;
 
 
-
-/*===============================================================================
-   Subroutine - DspNumber (number, dsp, pos, dp, dpPos)
-
-   Recursively sets all the LED's
-
-   number = number to display
-   dsp = display to write the number on in the MAX7219 chain (0-7)
-   pos = position of first digit to write.  3 digits=2, 4 digit=3, 5 digit=4
-   dp = boolean flag whether to show a decimal point
-   dpPos = position to put the decimal point if there is one to show.
-
-   Default argument values can be useful to minimize the number of arguments that
-   need to be passed if items such as the decimal point or LED size do not change.
-   If you always want one digit to right of decimal point change dp=true, dpPos=1
-   as an example
-  =============================================================================== */
-void DspNumber(long number, int dsp = 0, byte pos = LEDSIZE - 1,
-               boolean dp = false, byte dpPos = 0) {
-
-  byte digit = number % 10;           // Get first digit on right
-
-  if (dp && dpPos == pos)             // Check if DP needs to be displayed
-    lc.setDigit(dsp, pos, digit, true); // Display digit with DP
-  else
-
-
-    lc.setDigit(dsp, pos, digit, false); // Display digit without DP
-
-  long remainingDigits = number / 10; // Check if another digit to display
-  if (remainingDigits > 0) {          // If there is, do it all again
-    DspNumber(remainingDigits, dsp,  pos - 1, dp, dpPos);
-  }
-}
-
-
 void setup()  {
 
     // Setup for Software Serial
