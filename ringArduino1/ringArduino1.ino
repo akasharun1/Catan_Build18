@@ -1,5 +1,7 @@
 #include <SoftwareSerial.h>
-#include "LedControl.h"
+#include <LedControl.h>
+#include <Arduino.h>
+#include <RotaryEncoder.h>
 
 // Serial
 #define rxPin 10
@@ -18,11 +20,50 @@
 #define WHEAT 3
 #define IRON 4
 
-#define OFF 0
-#define ON 1
+#define DOWN 0
+#define UP 1
+#define switchPin 8
+
+#define MAXPOS 19
+#define MINPOS 0
+#define STEPSIZE 4
 
 // Ring Arduino Specific
-#define RingArduinoCode 0x61
+char RingArduinoCode;
+
+#if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_NANO_EVERY)
+// Example for Arduino UNO with input signals on pin 2 and 3
+#define PIN_IN1 A2
+#define PIN_IN2 A3
+
+#elif defined(ESP8266)
+// Example for ESP8266 NodeMCU with input signals on pin D5 and D6
+#define PIN_IN1 D5
+#define PIN_IN2 D6
+
+#endif
+
+// A pointer to the dynamic created rotary encoder instance.
+// This will be done in setup()
+RotaryEncoder *encoder = nullptr;
+
+#if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_NANO_EVERY)
+// This interrupt routine will be called on any change of one of the input signals
+void checkPosition()
+{
+  encoder->tick(); // just call tick() to check the state.
+}
+
+#elif defined(ESP8266)
+/**
+ * @brief The interrupt service routine will be called on any change of one of the input signals.
+ */
+IRAM_ATTR void checkPosition()
+{
+  encoder->tick(); // just call tick() to check the state.
+}
+
+#endif
 
 
 // Set up a new SoftwareSerial object
@@ -35,11 +76,12 @@ char woodCount;
 char sheepCount;
 char clayCount;
 char wheatCount;
-char ironCount;
+char rockCount;
 
 char encoderSwitchState;
 char encoderRotaryState;
 char sevenSegVal;
+int pos;
 
 
 void setup()  {
@@ -49,15 +91,15 @@ void setup()  {
     pinMode(txPin, OUTPUT);
     mySerial.begin(9600);
 
+    pinMode(switchPin, INPUT);
 
     woodCount = 0;
     sheepCount = 0;
     clayCount = 0;
     wheatCount = 0;
-    ironCount = 0;
+    rockCount = 0;
 
-    encoderRotaryState = SHEEP;
-    encoderSwitchState = OFF;
+    pos = 0;
 
     // Setup for 7-segments
 
@@ -70,65 +112,115 @@ void setup()  {
     }
 
 
+    // setup the rotary encoder functionality
 
+    // use FOUR3 mode when PIN_IN1, PIN_IN2 signals are always HIGH in latch position.
+    // encoder = new RotaryEncoder(PIN_IN1, PIN_IN2, RotaryEncoder::LatchMode::FOUR3);
+
+    // use FOUR0 mode when PIN_IN1, PIN_IN2 signals are always LOW in latch position.
+    // encoder = new RotaryEncoder(PIN_IN1, PIN_IN2, RotaryEncoder::LatchMode::FOUR0);
+
+    // use TWO03 mode when PIN_IN1, PIN_IN2 signals are both LOW or HIGH in latch position.
+    encoder = new RotaryEncoder(PIN_IN1, PIN_IN2, RotaryEncoder::LatchMode::TWO03);
+
+    // register interrupt routine
+    attachInterrupt(digitalPinToInterrupt(PIN_IN1), checkPosition, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(PIN_IN2), checkPosition, CHANGE);
+
+    encoder->tick();
+   // encoderSwitchState = encoder->
+
+	// Dynamically set the unique arduino code
+	RingArduinoCode = mySerial.read();
+	mySerial.write(RingArduinoCode + 1);
 }
 
 void loop() {
+    encoder->tick(); // just call tick() to check the state.
+    newPos = encoder->getPosition();
+	pos = newPos >= MAXPOS ? MAXPOS : (newPos <= MINPOS ? MINPOS : newPos);
+
+    // if(encoder-> != encoderSwitchState) {
+    //     encoderSwitchState = !encoderSwitchState;
+    //     switch (pos) {
+    //         case 0 ... 3: break;
+    //         case 4 ... 7: break;
+    //         case 8 ... 11: break;
+    //         case 12 ... 15: break;
+    //         case 16 ... 19: break;
+    //         default: 
+    //     }
+    // }
+
+    lc.setDigit(0, LEDSIZE - 1, woodCount, pos/STEPSIZE == 0);
+    lc.setDigit(0, LEDSIZE - 2, sheepCount, pos/STEPSIZE == 1);
+    lc.setDigit(0, LEDSIZE - 3, clayCount, pos/STEPSIZE == 2);
+    lc.setDigit(0, LEDSIZE - 4, wheatCount, pos/STEPSIZE == 3);
+    lc.setDigit(0, LEDSIZE - 5, rockCount, pos/STEPSIZE == 4);
 
     int messageLengthCount = 0;
 
     // Message parsing and sending
-
     if (mySerial.available() > 0) {
         if (mySerial.read() == 's') {
 
             // Stream starts with an s and ends with an e
             mySerial.write('s');
 
-            while (mySerial.read() != 'e') {
+            char currRead;
+            while ((currRead = mySerial.read()) != 'e') {
 
                 // Each Arduino has a seperate Code after whose 7 bytes
                 // are data values relevant to it
 
-                if (mySerial.read() == RingArduinoCode) {
+                if (currRead == RingArduinoCode) {
                     mySerial.write(RingArduinoCode);
 
-                    mySerial.read();
-                    mySerial.write(encoderSwitchState);
+                    // Should we use this as a way to reset the rotary state? not hard
                     mySerial.read();
                     mySerial.write(encoderRotaryState);
-
-                    woodCount = mySerial.read();
+                    
+                    woodCount += mySerial.read(); 
                     mySerial.write(woodCount);
 
-                    sheepCount = mySerial.read();
+                    sheepCount += mySerial.read();
                     mySerial.write(sheepCount);
 
-                    clayCount = mySerial.read();
+                    clayCount += mySerial.read();
                     mySerial.write(clayCount);
 
-                    wheatCount = mySerial.read();
+                    wheatCount += mySerial.read();
                     mySerial.write(wheatCount);
 
-                    ironCount = mySerial.read();
-                    mySerial.write(ironCount);
+                    rockCount += mySerial.read();
+                    mySerial.write(rockCount);
                 }
                 else {
-                    mySerial.write(mySerial.read());
+                    mySerial.write(currRead);
                 }
             }
 
             mySerial.write('e');
         }
     }
-    lc.setDigit(0, LEDSIZE - 1, woodCount, false);
-    lc.setDigit(0, LEDSIZE - 2, sheepCount, false);
-    lc.setDigit(0, LEDSIZE - 3, clayCount, false);
-    lc.setDigit(0, LEDSIZE - 4, wheatCount, false);
-    lc.setDigit(0, LEDSIZE - 4, ironCount, false);
-
-
 }
+
+
+// To use other pins with Arduino UNO you can also use the ISR directly.
+// Here is some code for A2 and A3 using ATMega168 ff. specific registers.
+
+// Setup flags to activate the ISR PCINT1.
+// You may have to modify the next 2 lines if using other pins than A2 and A3
+//   PCICR |= (1 << PCIE1);    // This enables Pin Change Interrupt 1 that covers the Analog input pins or Port C.
+//   PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3 of Port C.
+
+// The Interrupt Service Routine for Pin Change Interrupt 1
+// This routine will only be called on any signal change on A2 and A3.
+// ISR(PCINT1_vect) {
+//   encoder->tick(); // just call tick() to check the state.
+// }
+
+// The End
 
 
 // https://lastminuteengineers.com/rotary-encoder-arduino-tutorial/
