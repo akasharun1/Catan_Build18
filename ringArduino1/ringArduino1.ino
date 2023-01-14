@@ -14,11 +14,11 @@
 #define ChainLength 1
 #define LEDSIZE 5
 
-#define SHEEP 0
-#define WOOD 1
+#define ROCK 1
 #define CLAY 2
 #define WHEAT 3
-#define IRON 4
+#define WOOD 4
+#define SHEEP 5
 
 #define DOWN 0
 #define UP 1
