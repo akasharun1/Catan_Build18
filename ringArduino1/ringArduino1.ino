@@ -88,8 +88,11 @@ void setup() {
 
   RingArduinoCode = 5;
 
-  //RingArduinoCode = mySerial.read();
-  //mySerial.write(RingArduinoCode + 1);
+  //
+  // if (mySerial.available() > 0) {
+  //   RingArduinoCode = mySerial.read();
+  //   mySerial.write(RingArduinoCode + 1);
+  //}
 
 }
 
