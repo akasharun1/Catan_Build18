@@ -1,3 +1,5 @@
+/*
+ 
 #include <SoftwareSerial.h>
 #include <Arduino.h>
 
@@ -16,7 +18,7 @@
 // Set up a new SoftwareSerial object
 SoftwareSerial mySerial =  SoftwareSerial(rxPin, txPin);
 
-
+/*
 void place(int tile_type, int *tile_indices, tile_count) {
     for (int i = 0; i < tile_count; i++) {
         switch(tile_type) {
@@ -32,6 +34,7 @@ void place(int tile_type, int *tile_indices, tile_count) {
 
 }
 
+
 void setup() {
     // Setup for Software Serial
     pinMode(rxPin, INPUT);
@@ -39,7 +42,7 @@ void setup() {
     mySerial.begin(9600);
 }
 
-void main() {
+void loop() {
     char[19] tiles;
     int desert_ind = -1;
     int sheep_ind = 0;
@@ -88,3 +91,4 @@ void main() {
         place(SHEEP, sheep_indices, sheep_ind);
     }
 }
+*/

@@ -1,3 +1,4 @@
+
 #include <SoftwareSerial.h>
 #include <LedControl.h>
 #include <Arduino.h>
@@ -30,6 +31,7 @@
 
 // Ring Arduino Specific
 char RingArduinoCode;
+int pos;
 
 #if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_NANO_EVERY)
 // Example for Arduino UNO with input signals on pin 2 and 3
@@ -52,6 +54,8 @@ RotaryEncoder *encoder = nullptr;
 void checkPosition()
 {
   encoder->tick(); // just call tick() to check the state.
+
+  Serial.println(pos);
 }
 
 #elif defined(ESP8266)
@@ -81,7 +85,6 @@ char rockCount;
 char encoderSwitchState;
 char encoderRotaryState;
 char sevenSegVal;
-int pos;
 
 
 void setup()  {
@@ -90,6 +93,8 @@ void setup()  {
     pinMode(rxPin, INPUT);
     pinMode(txPin, OUTPUT);
     mySerial.begin(9600);
+
+    Serial.begin(9600);
 
     pinMode(switchPin, INPUT);
 
@@ -137,7 +142,7 @@ void setup()  {
 
 void loop() {
     encoder->tick(); // just call tick() to check the state.
-    newPos = encoder->getPosition();
+    int newPos = encoder->getPosition();
 	pos = newPos >= MAXPOS ? MAXPOS : (newPos <= MINPOS ? MINPOS : newPos);
 
     // if(encoder-> != encoderSwitchState) {
