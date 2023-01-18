@@ -131,9 +131,21 @@ typedef struct tile_comp {
     int num;
 } tile_t;
 
+typedef struct player {
+    int woodCount;
+    int sheepCount;
+    int clayCount;
+    int wheatCount;
+    int rockCount;
+} player_t;
+
+
+
 typedef struct catan_board {
     tile_t[19] tiles; // Tile IDs are assigned by reed switch value
 } board_t;
+
+player_t[4] players;
 
 int Rand(int n)
 {
@@ -195,18 +207,36 @@ void initPins() {
 
 
 void initRing() {
-    Serial.write(PLAYER0);
 
+    Serial.write(PLAYER0);
+    for (int i = 0; i < 20; i++) Serial.write(0);
+
+
+    //Serial.write('s');
+    //for(int player = 0; player < 4; player++) {
+    //    Serial.write(PLAYER0 + player);
+    //    Serial.write(0);
+    //    Serial.write(0);
+    //    Serial.write(0);
+    //    Serial.write(0);
+    //    Serial.write(0);
+    //}
+    //Serial.write('e');
+}
+
+
+void ringMessage() {
     Serial.write('s');
-    for(int player = 0; player < 4; player++) {
+    for(int i = 0; i < 4; i++) {
         Serial.write(PLAYER0 + player);
-        Serial.write(0);
-        Serial.write(0);
-        Serial.write(0);
-        Serial.write(0);
-        Serial.write(0);
+        Serial.write(players[0].woodCount);
+        Serial.write(players[0].sheepCount);
+        Serial.write(players[0].clayCount);
+        Serial.write(players[0].wheatCount);
+        Serial.write(players[0].RockCount);
     }
     Serial.write('e');
+
 }
 
 board_t initBoard() {
@@ -233,12 +263,24 @@ board_t initBoard() {
     return game_board;
 }
 
+void initPlayers() {
+
+    for (int i = 0; i < 4: i++) {
+        players[i].woodCount = 0;
+        players[i].sheepCount = 0;
+        players[i].clayCount = 0;
+        players[i].wheatCount = 0;
+        players[i].rockCount = 0;
+    }
+}
+
 void setup() {
     Serial.begin(9600);
 
     initPins();
     initRing();
     initBoard();
+    initPlayers();
 
 }
 
