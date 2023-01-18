@@ -80,6 +80,9 @@ map<pair<int, int>, pair<int, int>>::iterator iter;
 // Assign hardcoded values of buttons to tile and vertices here. This is a dummy example
 button_ind_to_tileVertex_ind[make_pair(0, 2)] = make_pair(2, 3);
 
+
+
+
 typedef enum {
     desert = 0,
     rock,
@@ -208,7 +211,7 @@ void initRing() {
 
 board_t initBoard() {
     vector<resource_t> resources = {desert, wood, wood, wood, wood, clay, clay, clay, sheep, sheep, sheep, sheep, wheat, wheat, wheat, wheat, rock, rock, rock};
-    vector<int> nums = {2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12}
+    vector<int> nums = {2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12};
 
     random_shuffle(resources.begin(), resources.end());
     random_shuffle(nums.begin(), nums.end());
@@ -226,6 +229,7 @@ board_t initBoard() {
             numInd++;
         }
     }
+
     return game_board;
 }
 
