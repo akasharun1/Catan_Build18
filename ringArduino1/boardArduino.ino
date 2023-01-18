@@ -1,4 +1,10 @@
 #include <Arduino.h>
+using namespace std;
+#include <map>
+#include <vector>
+#include <algorithm>
+
+#define PLAYER0 0x60
 
 #define REEDSW_X0 11
 #define REEDSW_X1 12
@@ -66,11 +72,12 @@
 #define piDisplayTX 14
 #define piDisplayRX 15
 
-using namespace std;
+
 map<pair<int, int>, pair<int, int>> button_ind_to_tileVertex_ind;
 map<pair<int, int>, pair<int, int>> button_ind_to_tileEdge_ind;
 map<pair<int, int>, pair<int, int>>::iterator iter;
 
+// Assign hardcoded values of buttons to tile and vertices here. This is a dummy example
 button_ind_to_tileVertex_ind[make_pair(0, 2)] = make_pair(2, 3);
 
 typedef enum {
@@ -81,6 +88,15 @@ typedef enum {
     wood,
     sheep
 } resource_t;
+
+typedef enum {
+    num_desert = 1,
+    num_rock = 3,
+    num_clay = 3,
+    num_wheat = 4,
+    num_wood = 4,
+    num_sheep = 4
+} resource_count_t;
 
 typedef enum {
     none = 0,
@@ -113,13 +129,16 @@ typedef struct tile_comp {
 } tile_t;
 
 typedef struct catan_board {
-    tile_t[19] tiles;
+    tile_t[19] tiles; // Tile IDs are assigned by reed switch value
 } board_t;
 
+int Rand(int n)
+{
+    return rand() % n ;
+}
 
-void setup() {
-    Serial.begin(9600);
 
+void initPins() {
     pinMode(REEDSW_X0, OUTPUT);
     pinMode(REEDSW_X1, OUTPUT);
     pinMode(REEDSW_X2, OUTPUT);
@@ -168,6 +187,55 @@ void setup() {
     pinMode(EDGES_Y3, INPUT_PULLUP);
     pinMode(EDGES_Y4, INPUT_PULLUP);
     pinMode(EDGES_X5, INPUT_PULLUP);
+}
+
+
+
+void initRing() {
+    Serial.write(PLAYER0);
+
+    Serial.write('s');
+    for(int player = 0; player < 4; player++) {
+        Serial.write(PLAYER0 + player);
+        Serial.write(0);
+        Serial.write(0);
+        Serial.write(0);
+        Serial.write(0);
+        Serial.write(0);
+    } 
+    Serial.write('e');
+}
+
+board_t initBoard() {
+    vector<resource_t> resources = {desert, wood, wood, wood, wood, clay, clay, clay, sheep, sheep, sheep, sheep, wheat, wheat, wheat, wheat, rock, rock, rock};
+    vector<int> nums = {2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12}
+
+    random_shuffle(resources.begin(), resources.end());
+    random_shuffle(nums.begin(), nums.end());
+
+    board_t game_board = new board_t;
+    game_board.tiles = new tile_t[19];
+
+    int numInd;
+    for (int i = 0; i < 19; i++){
+        game_board.tiles[i].type = resources[i];
+        if (resources[i] == desert) {
+            game_board.tiles[i].num =  -1;
+        } else {
+            game_board.tiles[i].num = nums[numInd];
+            numInd++;
+        }
+    }
+    return game_board;
+}
+
+void setup() {
+    Serial.begin(9600);
+
+    initPins();
+    initRing();
+    initBoard();
+
 }
        
 
@@ -242,4 +310,5 @@ pair<int, int> pollVertices() {
 }
 
 void loop() {
+    
 }

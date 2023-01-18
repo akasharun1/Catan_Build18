@@ -102,9 +102,6 @@ void loop() {
     Serial.println(newPosition);
   }
 
-
-
-
   lc.setDigit(0, LEDSIZE - 1, 5, (newPosition/STEPSIZE) % 5 == 0);
   lc.setDigit(0, LEDSIZE - 2, sheepCount, (newPosition/STEPSIZE) % 5 == 1);
   lc.setDigit(0, LEDSIZE - 3, clayCount, (newPosition/STEPSIZE) % 5 == 2);
@@ -127,26 +124,11 @@ void loop() {
               // are data values relevant to it
 
               if (currRead == RingArduinoCode) {
-                  mySerial.write(RingArduinoCode);
-
-                  // Should we use this as a way to reset the rotary state? not hard
-                  mySerial.read();
-                  mySerial.write(encoderRotaryState);
-
                   woodCount += mySerial.read();
-                  mySerial.write(woodCount);
-
-                  sheepCount += mySerial.read();
-                  mySerial.write(sheepCount);
-
                   clayCount += mySerial.read();
-                  mySerial.write(clayCount);
-
+                  sheepCount += mySerial.read();
                   wheatCount += mySerial.read();
-                  mySerial.write(wheatCount);
-
                   rockCount += mySerial.read();
-                  mySerial.write(rockCount);
               }
               else {
                   mySerial.write(currRead);
