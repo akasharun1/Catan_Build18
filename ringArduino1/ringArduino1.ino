@@ -125,14 +125,11 @@ void loop() {
               // are data values relevant to it
 
               if (currRead == RingArduinoCode) {
-                  mySerial.write(currRead);
                   woodCount += mySerial.read();
-                  mySerial.write(woodCoun
                   sheepCount += mySerial.read();
                   clayCount += mySerial.read();
                   wheatCount += mySerial.read();
                   rockCount += mySerial.read();
-                  my
               }
               else {
                   mySerial.write(currRead);
