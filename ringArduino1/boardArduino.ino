@@ -13,7 +13,7 @@ using namespace std;
 
 #define REEDSW_Y0 5
 #define REEDSW_Y1 6
-#define REEDSW_Y2 7 
+#define REEDSW_Y2 7
 #define REEDSW_Y3 8
 #define REEDSW_Y4 9
 #define REEDSW_Y5 10
@@ -25,7 +25,7 @@ using namespace std;
 #define VERTICES_X2 56
 #define VERTICES_X3 57
 #define VERTICES_X4 58
-#define VERTICES_X5 59 
+#define VERTICES_X5 59
 #define VERTICES_X6 60
 #define VERTICES_X7 61
 #define VERTICES_X8 62
@@ -202,7 +202,7 @@ void initRing() {
         Serial.write(0);
         Serial.write(0);
         Serial.write(0);
-    } 
+    }
     Serial.write('e');
 }
 
@@ -237,7 +237,7 @@ void setup() {
     initBoard();
 
 }
-       
+
 
 int pollReedSwitch() {
     digitalWrite(REEDSW_X0, HIGH);
@@ -246,9 +246,13 @@ int pollReedSwitch() {
 
     for (int i = REEDSW_X0; i < REEDSW_X2 + 1; i++) {
         digitalWrite(i, LOW);
-        for(int j = REEDSW_Y0; i < REEDSW_Y5 + 1; j++) { 
+        for(int j = REEDSW_Y0; i < REEDSW_Y5 + 1; j++) {
             // We are assigning the tile number based on its location in the reed switch matrix
-            if (digitalRead(j) == LOW) return (i+1)*(j+1);
+            if (digitalRead(j) == LOW) {
+                int reedRow = i + 1 - REEDSW_X0;
+                int reedCol = j + 1 - REEDSW_Y0;
+                return (reedRow) * (reedCol);
+            }
         }
         digitalWrite(i, HIGH);
     }
@@ -269,19 +273,55 @@ pair<int, int> pollEdges() {
     digitalWrite(EDGES_X8, HIGH);
     digitalWrite(EDGES_X9, HIGH);
     digitalWrite(EDGES_X10, HIGH);
-    digitalWrite(EDGES_X11, HIGH); 
-    
+    digitalWrite(EDGES_X11, HIGH);
+
     for (int i = EDGES_X0; i < EDGES_X11 + 1; i += 2) {
         digitalWrite(i, LOW);
-        for(int j = EDGES_Y0; j < EDGES_Y5 + 1; j += 2) { 
+        for(int j = EDGES_Y0; j < EDGES_Y5 + 1; j += 2) {
             // We are assigning the tile number based on its location in the reed switch matrix
-            if (digitalRead(j) == 0) return button_ind_to_tileEdge_ind[make_pair(i, j)].second;
+            if (digitalRead(j) == 0) {
+                int edgeRow = (i - EDGES_X0) >> 1;
+                int edgeCol = (j - EDGES_Y0) >> 1;
+                return button_ind_to_tileEdge_ind[make_pair(edgeRow, edgeCol)].second;
+            }
         }
         digitalWrite(i, HIGH);
     }
-    
+
     return make_pair(-1, -1);
 }
+
+pair<int, int> testEdges() {
+    digitalWrite(EDGES_X0, HIGH);
+    digitalWrite(EDGES_X1, HIGH);
+    digitalWrite(EDGES_X2, HIGH);
+    digitalWrite(EDGES_X3, HIGH);
+    digitalWrite(EDGES_X4, HIGH);
+    digitalWrite(EDGES_X5, HIGH);
+    digitalWrite(EDGES_X6, HIGH);
+    digitalWrite(EDGES_X7, HIGH);
+    digitalWrite(EDGES_X8, HIGH);
+    digitalWrite(EDGES_X9, HIGH);
+    digitalWrite(EDGES_X10, HIGH);
+    digitalWrite(EDGES_X11, HIGH);
+
+    for (int i = EDGES_X0; i < EDGES_X11 + 1; i += 2) {
+        digitalWrite(i, LOW);
+        for(int j = EDGES_Y0; j < EDGES_Y5 + 1; j += 2) {
+            // We are assigning the tile number based on its location in the reed switch matrix
+            if (digitalRead(j) == 0) {
+                int edgeRow = (i - EDGES_X0) >> 1;
+                int edgeCol = (j - EDGES_Y0) >> 1;
+                return make_pair(edgeRow, edgeCol);
+            }
+        }
+        digitalWrite(i, HIGH);
+    }
+
+    return make_pair(-1, -1);
+}
+
+
 
 pair<int, int> pollVertices() {
     digitalWrite(VERTICES_X0, HIGH);
@@ -295,20 +335,55 @@ pair<int, int> pollVertices() {
     digitalWrite(VERTICES_X8, HIGH);
     digitalWrite(VERTICES_X9, HIGH);
     digitalWrite(VERTICES_X10, HIGH);
-    digitalWrite(VERTICES_X11, HIGH); 
-    
+    digitalWrite(VERTICES_X11, HIGH);
+
     for (int i = VERTICES_X0; i < VERTICES_X8 + 1; i++) {
         digitalWrite(i, LOW);
-        for(int j = VERTICES_Y0; j < VERTICES_Y5 + 1; j++) { 
+        for(int j = VERTICES_Y0; j < VERTICES_Y5 + 1; j++) {
             // We are assigning the tile number based on its location in the reed switch matrix
-            if (digitalRead(j) == 0) return button_ind_to_tileEdge_ind[make_pair(i, j)].second;
+            if (digitalRead(j) == 0) {
+                int vertexRow = i - VERTICES_X0;
+                int vertexCol = j - VERTICES_Y0;
+                return button_ind_to_tileVertex_ind[make_pair(vertexRow, vertexCol)].second;
+            }
         }
         digitalWrite(i, HIGH);
     }
-    
+
     return make_pair(-1, -1);
 }
 
+pair<int, int> testVertices() {
+    digitalWrite(VERTICES_X0, HIGH);
+    digitalWrite(VERTICES_X1, HIGH);
+    digitalWrite(VERTICES_X2, HIGH);
+    digitalWrite(VERTICES_X3, HIGH);
+    digitalWrite(VERTICES_X4, HIGH);
+    digitalWrite(VERTICES_X5, HIGH);
+    digitalWrite(VERTICES_X6, HIGH);
+    digitalWrite(VERTICES_X7, HIGH);
+    digitalWrite(VERTICES_X8, HIGH);
+    digitalWrite(VERTICES_X9, HIGH);
+    digitalWrite(VERTICES_X10, HIGH);
+    digitalWrite(VERTICES_X11, HIGH);
+
+    for (int i = VERTICES_X0; i < VERTICES_X8 + 1; i++) {
+        digitalWrite(i, LOW);
+        for(int j = VERTICES_Y0; j < VERTICES_Y5 + 1; j++) {
+            // We are assigning the tile number based on its location in the reed switch matrix
+            if (digitalRead(j) == 0) {
+                int vertexRow = i - VERTICES_X0;
+                int vertexCol = j - VERTICES_Y0;
+                return make_pair(vertexRow, vertexCol);
+            }
+        }
+        digitalWrite(i, HIGH);
+    }
+
+    return make_pair(-1, -1);
+}
+
+
 void loop() {
-    
+
 }
