@@ -3,10 +3,20 @@
 #include <Arduino.h>
 #include "Encoder.h"
 
+enum ControllerColors {
+  blueController = 60,
+  redController = 61,
+  greenController = 62,
+  orangeController = 63
+};
+
+// Ring Arduino Specific
+#define RingArduinoCode orangeController
 
 // Serial
 #define rxPin 10
 #define txPin 11
+
 
 // 7-segment Control
 #define DataIn 5
@@ -24,14 +34,13 @@
 
 
 // Encoder Specifics
-#define ENC_CLK 10
-#define ENC_DT 11
-#define ENC_SW 8
+#define ENC_CLK 2
+#define ENC_DT 3
+#define ENC_SW 4
 
 #define STEPSIZE 4
 
-// Ring Arduino Specific
-char RingArduinoCode;
+
 
 // Change these two numbers to the pins connected to your encoder.
 //   Best Performance: both pins have interrupt capability
@@ -87,10 +96,6 @@ void setup() {
   }
 
 
-  while (mySerial.available <= 0);
-
-  RingArduinoCode = mySerial.read();
-  mySerial.write(RingArduinoCode + 1);
 
 
 }
@@ -141,4 +146,3 @@ void loop() {
   }
 
 }
-
