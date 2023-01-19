@@ -65,8 +65,8 @@ void setup() {
   Serial.println("Basic Encoder Test:");
 
 
-  pinMode(rxPin, INPUT);
-  pinMode(txPin, OUTPUT);
+  //pinMode(rxPin, INPUT);
+  //pinMode(txPin, OUTPUT);
 
   pinMode(ENC_SW, INPUT);
 
@@ -104,49 +104,50 @@ void loop() {
 
   int messageLengthCount = 0;
 
-  while(Serial.available() > 0) {
-    Serial.write(Serial.read());
-  }
+//  while(Serial.available() > 0) {
+//    Serial.write(Serial.read());
+//  }
 
   // Message parsing and sending
-//  if (Serial.available() > 0) {
-//      if (Serial.read() == 's') {
+  if (Serial.available() > 0) {
+      if (Serial.read() == 's') {
 
-//          // Stream starts with an s and ends with an e
-//          Serial.write('s');
+          // Stream starts with an s and ends with an e
+          Serial.write('s');
 
         
-//          while (Serial.available() <= 0) ;
-//          char currRead = Serial.read();
+          while (Serial.available() <= 0) ;
+          char currRead = Serial.read();
          
-//          while (currRead != 'e' && (Serial.available() > 4)) {
+          while (currRead != 'e' && (Serial.available() > 5)) {
                
-//              // Each Arduino has a seperate Code after whose 7 bytes
-//              // are data values relevant to it
+              // Each Arduino has a seperate Code after whose 7 bytes
+              // are data values relevant to it
 
-//              if (currRead == RingArduinoCode) {
-//                  Serial.write(currRead);
+              if (currRead == RingArduinoCode) {
+                  Serial.write(currRead);
+                  currRead = Serial.read();
+//                  woodCount += Serial.read();
+//                  Serial.write(woodCount);
+//                  sheepCount += Serial.read();
+//                  Serial.write(sheepCount);
+//                  clayCount += Serial.read();
+//                  Serial.write(clayCount);
+//                  wheatCount += Serial.read();
+//                  Serial.write(wheatCount);
+//                  rockCount += Serial.read();
+//                  Serial.write(rockCount);
 //                  currRead = Serial.read();
-//                  //woodCount += Serial.read();
-//                  //Serial.print(woodCount);
-//                  //sheepCount += Serial.read();
-//                  //Serial.print(sheepCount);
-//                  //clayCount += Serial.read();
-//                  //Serial.print(clayCount);
-//                  //wheatCount += Serial.read();
-//                  //Serial.print(wheatCount);
-//                  //rockCount += Serial.read();
-//                  //Serial.print(rockCount);
-//              }
-//              else {
-//                  Serial.write(currRead);
-//                  currRead = Serial.read();
-//              }
+              }
+              else {
+                  Serial.write(currRead);
+                  currRead = Serial.read();
+              }
              
-//          }
+          }
 
-//          Serial.write('e');
-//      }
-//  }
+          Serial.write('e');
+      }
+  }
 
 }

@@ -107,7 +107,7 @@ void ringMessage() {
     
     
     Serial1.write('s');
-    Serial1.write("a quick brown fox jumps over idk");
+
     for(int i = 0; i < 4; i++) {
         Serial1.write(PLAYER0 + i);
         Serial1.write(players[i].woodCount);
@@ -338,7 +338,7 @@ void loop() {
     int aval = Serial1.available();
 
     for (int i = 0; i < aval; i++) {
-      Serial.println(char(Serial1.read()));
+      Serial.println((Serial1.read()));
     }
 
 
