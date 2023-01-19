@@ -2,6 +2,10 @@
 
 player_t players[4];
 
+lookup_t *dict = (lookup_t *) malloc(sizeof(lookup_t));
+initDict(dict);
+
+
 void shuffle(int *array, size_t n)
 {
     if (n > 1)
@@ -115,6 +119,7 @@ void ringMessage() {
         Serial1.write(players[i].clayCount);
         Serial1.write(players[i].wheatCount);
         Serial1.write(players[i].rockCount);
+        Serial1.write(0x0);
     }
     Serial1.write('e');
 
@@ -129,7 +134,6 @@ void initBoard() {
 
 
     board_t *game_board = (board_t *) malloc(sizeof(board_t));
-    //game_board->tiles = (tile_t *) malloc(19 * sizeof(tile_t));
 
     int numInd;
     for (int i = 0; i < 19; i++){
@@ -191,12 +195,11 @@ int pollReedSwitch() {
 
     for (int i = REEDSW_X0; i < REEDSW_X2 + 1; i++) {
         digitalWrite(i, LOW);
-        for(int j = REEDSW_Y0; i < REEDSW_Y5 + 1; j++) {
+        for(int j = REEDSW_Y0; j < REEDSW_Y5 + 1; j++) {
             // We are assigning the tile number based on its location in the reed switch matrix
             if (digitalRead(j) == LOW) {
-                int reedRow = i + 1 - REEDSW_X0;
-                int reedCol = j + 1 - REEDSW_Y0;
-                return (reedRow) * (reedCol);
+                size_t tile = reedsw_lookup(dict, j, i);
+                return tile == -1 ? 18 : tile;
             }
         }
         digitalWrite(i, HIGH);
@@ -228,14 +231,12 @@ int *pollEdges() {
                 int edgeRow = (i - EDGES_X0) >> 1;
                 int edgeCol = (j - EDGES_Y0) >> 1;
 
-                //return button_ind_to_tileEdge_ind[make_pair(edgeRow, edgeCol)].second;
-                return NULL;
+                return edge_lookup(dict, j, i);
             }
         }
         digitalWrite(i, HIGH);
     }
 
-    //return make_pair(-1, -1);
     return NULL;
 }
 
@@ -292,14 +293,13 @@ int *pollVertices() {
             if (digitalRead(j) == 0) {
                 int vertexRow = i - VERTICES_X0;
                 int vertexCol = j - VERTICES_Y0;
-                //return button_ind_to_tileVertex_ind[make_pair(vertexRow, vertexCol)].second;
-                return NULL;
+                
+                return vertex_lookup(dict, j, i);
             }
         }
         digitalWrite(i, HIGH);
     }
 
-    //return make_pair(-1, -1);
     return NULL;
 }
 
@@ -337,6 +337,21 @@ void testVertices() {
 }
 
 
+void checkEndTurnButtonStates() {
+
+    char by
+    int bytesAvail = Serial1.available();
+
+    for (int i = 0; i < bytesAvail; i++) {
+      
+      Serial.println((Serial1.read()));
+
+    }
+
+
+}
+
+
 void loop() {
     
     Serial.println("start ring msg");
@@ -349,7 +364,9 @@ void loop() {
     int aval = Serial1.available();
 //
     for (int i = 0; i < aval; i++) {
+      char 
       Serial.println((Serial1.read()));
+
     }
 
 

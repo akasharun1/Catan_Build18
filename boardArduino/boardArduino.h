@@ -136,3 +136,357 @@ struct player_t{
 struct board_t {
     tile_t tiles[19]; // Tile IDs are assigned by reed switch value
 };
+
+struct lookup_t {
+    // Multiplied by two so that lookup will give tile number and index in respective array
+    size_t edge_storage[EDGES_Y_NUM][2 * EDGES_X_NUM];
+    size_t vertex_storage[VERTICES_Y_NUM][2 * VERTICES_X_NUM];
+    size_t reedsw_storage[RDSW_Y_NUM][RDSW_X_NUM];
+};
+
+void edge_insert(lookup_t *dict, size_t EDGE_Y, size_t EDGE_X, size_t tile_num, size_t edge_ind) {
+    size_t Y, X;
+
+    switch (EDGE_Y) {
+        case EDGES_Y0: Y = 0; break;
+        case EDGES_Y1: Y = 1; break;
+        case EDGES_Y2: Y = 2; break;
+        case EDGES_Y3: Y = 3; break;
+        case EDGES_Y4: Y = 4; break;
+        case EDGES_Y5: Y = 5; break;
+        default: Y = -1;
+    }
+    switch (EDGE_X) {
+        case EDGES_X0: X = 0; break;
+        case EDGES_X1: X = 1; break;
+        case EDGES_X2: X = 2; break;
+        case EDGES_X3: X = 3; break;
+        case EDGES_X4: X = 4; break;
+        case EDGES_X5: X = 5; break;
+        case EDGES_X6: X = 6; break;
+        case EDGES_X7: X = 7; break;
+        case EDGES_X8: X = 8; break;
+        case EDGES_X9: X = 9; break;
+        case EDGES_X10: X = 10; break;
+        case EDGES_X11: X = 11; break;
+        default: X = -1;
+    }
+
+    if (X == -1 || Y == -1) return;
+
+    dict->edge_storage[Y][2 * X] = tile_num;
+    dict->edge_storage[Y][2 * X + 1] = edge_ind;
+}
+
+size_t *edge_lookup(lookup_t *dict, size_t EDGE_Y, size_t EDGE_X) {
+    size_t Y, X;
+
+    switch (EDGE_Y) {
+        case EDGES_Y0: Y = 0; break;
+        case EDGES_Y1: Y = 1; break;
+        case EDGES_Y2: Y = 2; break;
+        case EDGES_Y3: Y = 3; break;
+        case EDGES_Y4: Y = 4; break;
+        case EDGES_Y5: Y = 5; break;
+        default: Y = -1;
+    }
+    switch (EDGE_X) {
+        case EDGES_X0: X = 0; break;
+        case EDGES_X1: X = 1; break;
+        case EDGES_X2: X = 2; break;
+        case EDGES_X3: X = 3; break;
+        case EDGES_X4: X = 4; break;
+        case EDGES_X5: X = 5; break;
+        case EDGES_X6: X = 6; break;
+        case EDGES_X7: X = 7; break;
+        case EDGES_X8: X = 8; break;
+        case EDGES_X9: X = 9; break;
+        case EDGES_X10: X = 10; break;
+        case EDGES_X11: X = 11; break;
+        default: X = -1;
+    }
+
+    if (X == -1 || Y == -1) return NULL;
+
+    return &(dict->edge_storage[Y][2 * X]);
+}
+
+void vertex_insert(lookup_t *dict, size_t VERTEX_Y, size_t VERTEX_X, size_t tile_num, size_t edge_ind) {
+    size_t Y, X;
+
+    switch (VERTEX_Y) {
+        case VERTEX_Y0: Y = 0; break;
+        case VERTEX_Y1: Y = 1; break;
+        case VERTEX_Y2: Y = 2; break;
+        case VERTEX_Y3: Y = 3; break;
+        case VERTEX_Y4: Y = 4; break;
+        case VERTEX_Y5: Y = 5; break;
+        default: Y = -1;
+    }
+    switch (VERTEX_X) {
+        case VERTEX_X0: X = 0; break;
+        case VERTEX_X1: X = 1; break;
+        case VERTEX_X2: X = 2; break;
+        case VERTEX_X3: X = 3; break;
+        case VERTEX_X4: X = 4; break;
+        case VERTEX_X5: X = 5; break;
+        case VERTEX_X6: X = 6; break;
+        case VERTEX_X7: X = 7; break;
+        case VERTEX_X8: X = 8; break;
+        default: X = -1;
+    }
+
+    if (X == -1 || Y == -1) return;
+
+    dict->vertex_storage[Y][2 * X] = tile_num;
+    dict->vertex_storage[Y][2 * X + 1] = edge_ind;
+}
+
+size_t *vertex_lookup(lookup_t *dict, size_t EDGE_Y, size_t EDGE_X) {
+size_t Y, X;
+
+    switch (VERTEX_Y) {
+        case VERTEX_Y0: Y = 0; break;
+        case VERTEX_Y1: Y = 1; break;
+        case VERTEX_Y2: Y = 2; break;
+        case VERTEX_Y3: Y = 3; break;
+        case VERTEX_Y4: Y = 4; break;
+        case VERTEX_Y5: Y = 5; break;
+        default: Y = -1;
+    }
+    switch (VERTEX_X) {
+        case VERTEX_X0: X = 0; break;
+        case VERTEX_X1: X = 1; break;
+        case VERTEX_X2: X = 2; break;
+        case VERTEX_X3: X = 3; break;
+        case VERTEX_X4: X = 4; break;
+        case VERTEX_X5: X = 5; break;
+        case VERTEX_X6: X = 6; break;
+        case VERTEX_X7: X = 7; break;
+        case VERTEX_X8: X = 8; break;
+        default: X = -1;
+    }
+
+    if (X == -1 || Y == -1) return NULL;
+
+    return &(dict->vertex_storage[Y][2 * X]);
+}
+
+
+void reedsw_insert(lookup_t *dict, size_t REEDSW_Y, size_t REEDSW_X, size_t tile_num) {
+    size_t Y, X;
+
+    switch (REEDSW_Y) {
+        case REEDSW_Y0: Y = 0; break;
+        case REEDSW_Y1: Y = 1; break;
+        case REEDSW_Y2: Y = 2; break;
+        case REEDSW_Y3: Y = 3; break;
+        case REEDSW_Y4: Y = 4; break;
+        case REEDSW_Y5: Y = 5; break;
+        default: Y = -1;
+    }
+    switch (REEDSW_X) {
+        case REEDSW_X0: X = 0; break;
+        case REEDSW_X1: X = 1; break;
+        case REEDSW_X2: X = 2; break;
+        default: X = -1;
+    }
+
+    if (X == -1 || Y == -1) return;
+
+    dict->reedsw_storage[Y][2 * X] = tile_num;
+}
+
+size_t reedsw_lookup(lookup_t *dict, size_t EDGE_Y, size_t EDGE_X) {
+    size_t Y, X;
+
+    switch (REEDSW_Y) {
+        case REEDSW_Y0: Y = 0; break;
+        case REEDSW_Y1: Y = 1; break;
+        case REEDSW_Y2: Y = 2; break;
+        case REEDSW_Y3: Y = 3; break;
+        case REEDSW_Y4: Y = 4; break;
+        case REEDSW_Y5: Y = 5; break;
+        default: Y = -1;
+    }
+    switch (REEDSW_X) {
+        case REEDSW_X0: X = 0; break;
+        case REEDSW_X1: X = 1; break;
+        case REEDSW_X2: X = 2; break;
+        default: X = -1;
+    }
+
+    if (X == -1 || Y == -1) return NULL;
+
+    return (dict->reedsw_storage[Y][X]);
+}
+
+// EXAMPLES FOR INSERTING INTO DICT
+// reedsw_insert(dict, REEDSW_Y0, REEDSW_X0, TILE VALUE HERE);
+// reedsw_insert(dict, REEDSW_Y5, REEDSW_X2, TILE VALUE HERE);
+
+// edge_insert(dict, EDGES_Y0, EDGES_X0, TILE VALUE HERE, EDGE INDEX HERE);
+// edge_insert(dict, EDGES_Y5, EDGES_X11, TILE VALUE HERE, EDGE INDEX HERE);
+
+// vertex_insert(dict, VERTICES_Y0, VERTICES_X0, TILE VALUE HERE, EDGE INDEX HERE);
+// vertex_insert(dict, VERTICES_Y5, VERTICES_X8, TILE VALUE HERE, EDGE INDEX HERE);
+void initDict(lookup_t *dict) {
+    edge_insert(dict, EDGES_Y0, EDGES_X0, , );
+    edge_insert(dict, EDGES_Y0, EDGES_X1, , );
+    edge_insert(dict, EDGES_Y0, EDGES_X2, , );
+    edge_insert(dict, EDGES_Y0, EDGES_X3, , );
+    edge_insert(dict, EDGES_Y0, EDGES_X4, , );
+    edge_insert(dict, EDGES_Y0, EDGES_X5, , );
+    edge_insert(dict, EDGES_Y0, EDGES_X6, , );
+    edge_insert(dict, EDGES_Y0, EDGES_X7, , );
+    edge_insert(dict, EDGES_Y0, EDGES_X8, , );
+    edge_insert(dict, EDGES_Y0, EDGES_X9, , );
+    edge_insert(dict, EDGES_Y0, EDGES_X10, , );
+    edge_insert(dict, EDGES_Y0, EDGES_X11, , );
+
+    edge_insert(dict, EDGES_Y1, EDGES_X0, , );
+    edge_insert(dict, EDGES_Y1, EDGES_X1, , );
+    edge_insert(dict, EDGES_Y1, EDGES_X2, , );
+    edge_insert(dict, EDGES_Y1, EDGES_X3, , );
+    edge_insert(dict, EDGES_Y1, EDGES_X4, , );
+    edge_insert(dict, EDGES_Y1, EDGES_X5, , );
+    edge_insert(dict, EDGES_Y1, EDGES_X6, , );
+    edge_insert(dict, EDGES_Y1, EDGES_X7, , );
+    edge_insert(dict, EDGES_Y1, EDGES_X8, , );
+    edge_insert(dict, EDGES_Y1, EDGES_X9, , );
+    edge_insert(dict, EDGES_Y1, EDGES_X10, , );
+    edge_insert(dict, EDGES_Y1, EDGES_X11, , );
+
+    edge_insert(dict, EDGES_Y2, EDGES_X0, , );
+    edge_insert(dict, EDGES_Y2, EDGES_X1, , );
+    edge_insert(dict, EDGES_Y2, EDGES_X2, , );
+    edge_insert(dict, EDGES_Y2, EDGES_X3, , );
+    edge_insert(dict, EDGES_Y2, EDGES_X4, , );
+    edge_insert(dict, EDGES_Y2, EDGES_X5, , );
+    edge_insert(dict, EDGES_Y2, EDGES_X6, , );
+    edge_insert(dict, EDGES_Y2, EDGES_X7, , );
+    edge_insert(dict, EDGES_Y2, EDGES_X8, , );
+    edge_insert(dict, EDGES_Y2, EDGES_X9, , );
+    edge_insert(dict, EDGES_Y2, EDGES_X10, , );
+    edge_insert(dict, EDGES_Y2, EDGES_X11, , );
+
+    edge_insert(dict, EDGES_Y3, EDGES_X0, , );
+    edge_insert(dict, EDGES_Y3, EDGES_X1, , );
+    edge_insert(dict, EDGES_Y3, EDGES_X2, , );
+    edge_insert(dict, EDGES_Y3, EDGES_X3, , );
+    edge_insert(dict, EDGES_Y3, EDGES_X4, , );
+    edge_insert(dict, EDGES_Y3, EDGES_X5, , );
+    edge_insert(dict, EDGES_Y3, EDGES_X6, , );
+    edge_insert(dict, EDGES_Y3, EDGES_X7, , );
+    edge_insert(dict, EDGES_Y3, EDGES_X8, , );
+    edge_insert(dict, EDGES_Y3, EDGES_X9, , );
+    edge_insert(dict, EDGES_Y3, EDGES_X10, , );
+    edge_insert(dict, EDGES_Y3, EDGES_X11, , );
+
+    edge_insert(dict, EDGES_Y4, EDGES_X0, , );
+    edge_insert(dict, EDGES_Y4, EDGES_X1, , );
+    edge_insert(dict, EDGES_Y4, EDGES_X2, , );
+    edge_insert(dict, EDGES_Y4, EDGES_X3, , );
+    edge_insert(dict, EDGES_Y4, EDGES_X4, , );
+    edge_insert(dict, EDGES_Y4, EDGES_X5, , );
+    edge_insert(dict, EDGES_Y4, EDGES_X6, , );
+    edge_insert(dict, EDGES_Y4, EDGES_X7, , );
+    edge_insert(dict, EDGES_Y4, EDGES_X8, , );
+    edge_insert(dict, EDGES_Y4, EDGES_X9, , );
+    edge_insert(dict, EDGES_Y4, EDGES_X10, , );
+    edge_insert(dict, EDGES_Y4, EDGES_X11, , );
+
+    edge_insert(dict, EDGES_Y5, EDGES_X0, , );
+    edge_insert(dict, EDGES_Y5, EDGES_X1, , );
+    edge_insert(dict, EDGES_Y5, EDGES_X2, , );
+    edge_insert(dict, EDGES_Y5, EDGES_X3, , );
+    edge_insert(dict, EDGES_Y5, EDGES_X4, , );
+    edge_insert(dict, EDGES_Y5, EDGES_X5, , );
+    edge_insert(dict, EDGES_Y5, EDGES_X6, , );
+    edge_insert(dict, EDGES_Y5, EDGES_X7, , );
+    edge_insert(dict, EDGES_Y5, EDGES_X8, , );
+    edge_insert(dict, EDGES_Y5, EDGES_X9, , );
+    edge_insert(dict, EDGES_Y5, EDGES_X10, , );
+    edge_insert(dict, EDGES_Y5, EDGES_X11, , );
+
+
+    vertex_insert(dict, VERTICES_Y0, VERTICES_X0, , );
+    vertex_insert(dict, VERTICES_Y0, VERTICES_X1, , );
+    vertex_insert(dict, VERTICES_Y0, VERTICES_X2, , );
+    vertex_insert(dict, VERTICES_Y0, VERTICES_X3, , );
+    vertex_insert(dict, VERTICES_Y0, VERTICES_X4, , );
+    vertex_insert(dict, VERTICES_Y0, VERTICES_X5, , );
+    vertex_insert(dict, VERTICES_Y0, VERTICES_X6, , );
+    vertex_insert(dict, VERTICES_Y0, VERTICES_X7, , );
+    vertex_insert(dict, VERTICES_Y0, VERTICES_X8, , );
+
+    vertex_insert(dict, VERTICES_Y1, VERTICES_X0, , );
+    vertex_insert(dict, VERTICES_Y1, VERTICES_X1, , );
+    vertex_insert(dict, VERTICES_Y1, VERTICES_X2, , );
+    vertex_insert(dict, VERTICES_Y1, VERTICES_X3, , );
+    vertex_insert(dict, VERTICES_Y1, VERTICES_X4, , );
+    vertex_insert(dict, VERTICES_Y1, VERTICES_X5, , );
+    vertex_insert(dict, VERTICES_Y1, VERTICES_X6, , );
+    vertex_insert(dict, VERTICES_Y1, VERTICES_X7, , );
+    vertex_insert(dict, VERTICES_Y1, VERTICES_X8, , );
+
+    vertex_insert(dict, VERTICES_Y2, VERTICES_X0, , );
+    vertex_insert(dict, VERTICES_Y2, VERTICES_X1, , );
+    vertex_insert(dict, VERTICES_Y2, VERTICES_X2, , );
+    vertex_insert(dict, VERTICES_Y2, VERTICES_X3, , );
+    vertex_insert(dict, VERTICES_Y2, VERTICES_X4, , );
+    vertex_insert(dict, VERTICES_Y2, VERTICES_X5, , );
+    vertex_insert(dict, VERTICES_Y2, VERTICES_X6, , );
+    vertex_insert(dict, VERTICES_Y2, VERTICES_X7, , );
+    vertex_insert(dict, VERTICES_Y2, VERTICES_X8, , );
+
+    vertex_insert(dict, VERTICES_Y3, VERTICES_X0, , );
+    vertex_insert(dict, VERTICES_Y3, VERTICES_X1, , );
+    vertex_insert(dict, VERTICES_Y3, VERTICES_X2, , );
+    vertex_insert(dict, VERTICES_Y3, VERTICES_X3, , );
+    vertex_insert(dict, VERTICES_Y3, VERTICES_X4, , );
+    vertex_insert(dict, VERTICES_Y3, VERTICES_X5, , );
+    vertex_insert(dict, VERTICES_Y3, VERTICES_X6, , );
+    vertex_insert(dict, VERTICES_Y3, VERTICES_X7, , );
+    vertex_insert(dict, VERTICES_Y3, VERTICES_X8, , );
+
+    vertex_insert(dict, VERTICES_Y4, VERTICES_X0, , );
+    vertex_insert(dict, VERTICES_Y4, VERTICES_X1, , );
+    vertex_insert(dict, VERTICES_Y4, VERTICES_X2, , );
+    vertex_insert(dict, VERTICES_Y4, VERTICES_X3, , );
+    vertex_insert(dict, VERTICES_Y4, VERTICES_X4, , );
+    vertex_insert(dict, VERTICES_Y4, VERTICES_X5, , );
+    vertex_insert(dict, VERTICES_Y4, VERTICES_X6, , );
+    vertex_insert(dict, VERTICES_Y4, VERTICES_X7, , );
+    vertex_insert(dict, VERTICES_Y4, VERTICES_X8, , );
+
+    vertex_insert(dict, VERTICES_Y5, VERTICES_X0, , );
+    vertex_insert(dict, VERTICES_Y5, VERTICES_X1, , );
+    vertex_insert(dict, VERTICES_Y5, VERTICES_X2, , );
+    vertex_insert(dict, VERTICES_Y5, VERTICES_X3, , );
+    vertex_insert(dict, VERTICES_Y5, VERTICES_X4, , );
+    vertex_insert(dict, VERTICES_Y5, VERTICES_X5, , );
+    vertex_insert(dict, VERTICES_Y5, VERTICES_X6, , );
+    vertex_insert(dict, VERTICES_Y5, VERTICES_X7, , );
+    vertex_insert(dict, VERTICES_Y5, VERTICES_X8, , );
+
+
+    reedsw_insert(dict, REEDSW_Y0, REEDSW_X0, 0);
+    reedsw_insert(dict, REEDSW_Y0, REEDSW_X1, 1);
+    reedsw_insert(dict, REEDSW_Y0, REEDSW_X2, 2);
+    reedsw_insert(dict, REEDSW_Y1, REEDSW_X0, 3);
+    reedsw_insert(dict, REEDSW_Y1, REEDSW_X1, 4);
+    reedsw_insert(dict, REEDSW_Y1, REEDSW_X2, 5);
+    reedsw_insert(dict, REEDSW_Y2, REEDSW_X0, 6);
+    reedsw_insert(dict, REEDSW_Y2, REEDSW_X1, 7);
+    reedsw_insert(dict, REEDSW_Y2, REEDSW_X2, 8);
+    reedsw_insert(dict, REEDSW_Y3, REEDSW_X0, 9);
+    reedsw_insert(dict, REEDSW_Y3, REEDSW_X1, 10);
+    reedsw_insert(dict, REEDSW_Y3, REEDSW_X2, 11);
+    reedsw_insert(dict, REEDSW_Y4, REEDSW_X0, 12);
+    reedsw_insert(dict, REEDSW_Y4, REEDSW_X1, 13);
+    reedsw_insert(dict, REEDSW_Y4, REEDSW_X2, 14);
+    reedsw_insert(dict, REEDSW_Y5, REEDSW_X0, 15);
+    reedsw_insert(dict, REEDSW_Y5, REEDSW_X1, 16);
+    reedsw_insert(dict, REEDSW_Y5, REEDSW_X2, 17);
+}

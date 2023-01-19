@@ -10,6 +10,8 @@ enum ControllerColors {
   orangeController = 63
 };
 
+
+
 // Ring Arduino Specific
 #define RingArduinoCode blueController
 
@@ -49,6 +51,8 @@ Encoder myEnc(ENC_CLK,ENC_DT);
 // Define pins for LedControl. These can be any digital pins on microcontroller.
 LedControl lc = LedControl(DataIn, Clk, CS, ChainLength);
 
+
+char endTurnSwitchState;
 char woodCount;
 char sheepCount;
 char clayCount;
@@ -62,6 +66,7 @@ size_t oldPosition  = -999;
 
 void setup() {
   Serial.begin(9600);
+  endTurnSwitchState = 0x0;
  //Serial.println("Basic Encoder Test:");
 
 
@@ -95,7 +100,7 @@ void loop() {
     //Serial.println(newPosition);
   }
 
-  lc.setDigit(0, LEDSIZE - 1, 5, (newPosition/STEPSIZE) % 5 == 0);
+  lc.setDigit(0, LEDSIZE - 1, woodCount, (newPosition/STEPSIZE) % 5 == 0);
   lc.setDigit(0, LEDSIZE - 2, sheepCount, (newPosition/STEPSIZE) % 5 == 1);
   lc.setDigit(0, LEDSIZE - 3, clayCount, (newPosition/STEPSIZE) % 5 == 2);
   lc.setDigit(0, LEDSIZE - 4, wheatCount, (newPosition/STEPSIZE) % 5 == 3);
@@ -132,7 +137,7 @@ void loop() {
 
   if (iter != 1) {
     buf[iter] = '\0';
-    Serial.write(buf);
+    //Serial.write(buf);
 
     for (int i = 0; i < iter; i++) {
       if (buf[i] == RingArduinoCode && iter >= i + 6) {
@@ -141,6 +146,7 @@ void loop() {
         clayCount = (clayCount + buf[i+3]) % 10;
         wheatCount = (wheatCount + buf[i+4]) % 10;
         rockCount = (rockCount + buf[i+5]) % 10;
+        buf[i+6] = endTurnSwitchState;
         break;
       }
     }
