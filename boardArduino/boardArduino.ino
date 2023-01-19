@@ -19,7 +19,7 @@ void shuffle(int *array, size_t n)
           array[j] = array[i];
           array[i] = t;
         }
-    }
+    } 
 }
 
 void initPins() {
