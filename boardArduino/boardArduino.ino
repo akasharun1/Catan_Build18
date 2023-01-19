@@ -69,7 +69,7 @@ void initPins() {
     pinMode(EDGES_Y2, INPUT_PULLUP);
     pinMode(EDGES_Y3, INPUT_PULLUP);
     pinMode(EDGES_Y4, INPUT_PULLUP);
-    pinMode(EDGES_X5, INPUT_PULLUP);
+    pinMode(EDGES_Y5, INPUT_PULLUP);
 }
 
 
@@ -167,7 +167,7 @@ void setup() {
     Serial1.begin(9600);
     Serial.begin(9600);
 
-    initDict();
+    initDict(dict);
     initPins();
     //initRing();
     initBoard();
@@ -231,7 +231,7 @@ int *pollEdges() {
         digitalWrite(i, LOW);
         for(int j = EDGES_Y0; j < EDGES_Y5 + 1; j += 2) {
             // We are assigning the tile number based on its location in the reed switch matrix
-            if (digitalRead(j) == 0) {
+            if (digitalRead(j) == LOW) {
                 int edgeRow = (i - EDGES_X0) >> 1;
                 int edgeCol = (j - EDGES_Y0) >> 1;
 
@@ -262,7 +262,7 @@ int *testEdges() {
         digitalWrite(i, LOW);
         for(int j = EDGES_Y0; j < EDGES_Y5 + 1; j += 2) {
             // We are assigning the tile number based on its location in the reed switch matrix
-            if (digitalRead(j) == 0) {
+            if (digitalRead(j) == LOW) {
                 int edgeRow = (i - EDGES_X0) >> 1;
                 int edgeCol = (j - EDGES_Y0) >> 1;
                 int *retVal = (int *) malloc(2 * sizeof(int));
@@ -293,7 +293,7 @@ int *pollVertices() {
         digitalWrite(i, LOW);
         for(int j = VERTICES_Y0; j < VERTICES_Y5 + 1; j++) {
             // We are assigning the tile number based on its location in the reed switch matrix
-            if (digitalRead(j) == 0) {
+            if (digitalRead(j) == LOW) {
                 int vertexRow = i - VERTICES_X0;
                 int vertexCol = j - VERTICES_Y0;
                 
@@ -322,13 +322,13 @@ int *testVertices() {
         digitalWrite(i, LOW);
         for(int j = VERTICES_Y0; j < VERTICES_Y5 + 1; j++) {
             // We are assigning the tile number based on its location in the reed switch matrix
-            if (digitalRead(j) == 0) {
+            if (digitalRead(j) == LOW) {
                 int vertexRow = i - VERTICES_X0;
                 int vertexCol = j - VERTICES_Y0;
 
                 int *retVal = (int *) malloc(2 * sizeof(int));
-                retVal[0] = edgeRow;
-                retVal[1] = edgeCol;
+                retVal[0] = vertexRow;
+                retVal[1] = vertexCol;
                 return retVal;
             }
         }
@@ -375,6 +375,7 @@ void loop() {
             Serial.println(res[1]);
 
             free(res);
+            res = NULL;
         }
         if((res = testVertices()) != NULL) {
             Serial.print("VERTX, VERTY: ");
@@ -382,6 +383,7 @@ void loop() {
             Serial.println(res[1]);
 
             free(res);
+            res = NULL;
         }
     }
     
