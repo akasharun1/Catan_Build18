@@ -166,8 +166,19 @@ void setup() {
     initBoard();
     initPlayers();
 
-    delay(10000);
+    delay(3000);
 
+    ringMessage();
+
+//    Serial.println("Done Ring msg");
+//
+//    delay(1000);
+//  
+//    int aval = Serial1.available();
+//
+//    for (int i = 0; i < aval; i++) {
+//      Serial.println((Serial1.read()));
+//    }
 
 
 }
@@ -330,13 +341,13 @@ void loop() {
     
     Serial.println("start ring msg");
     ringMessage();
-
+//
     Serial.println("Done Ring msg");
-
+//
     delay(1000);
-  
+//  
     int aval = Serial1.available();
-
+//
     for (int i = 0; i < aval; i++) {
       Serial.println((Serial1.read()));
     }

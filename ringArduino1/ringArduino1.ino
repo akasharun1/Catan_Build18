@@ -62,7 +62,7 @@ size_t oldPosition  = -999;
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("Basic Encoder Test:");
+ //Serial.println("Basic Encoder Test:");
 
 
   //pinMode(rxPin, INPUT);
@@ -92,7 +92,7 @@ void loop() {
   size_t newPosition = myEnc.read();
   if (newPosition != oldPosition) {
     oldPosition = newPosition;
-    Serial.println(newPosition);
+    //Serial.println(newPosition);
   }
 
   lc.setDigit(0, LEDSIZE - 1, 5, (newPosition/STEPSIZE) % 5 == 0);
@@ -122,19 +122,25 @@ void loop() {
     iter++;
     while (Serial.available() <= 0);
     currRead = Serial.read();
+    //Serial.println(currRead);
+    
   }
+  buf[iter] = 'e';
+  iter++;
 
-  if (iter != 0) {
+  //Serial.println("Done Reading");
+
+  if (iter != 1) {
     buf[iter] = '\0';
     Serial.write(buf);
 
     for (int i = 0; i < iter; i++) {
       if (buf[i] == RingArduinoCode && iter >= i + 6) {
-        woodCount += buf[i+1];
-        sheepCount += buf[i+2];
-        clayCount += buf[i+3];
-        wheatCount += buf[i+4];
-        rockCount += buf[i+5];
+        woodCount = (woodCount + buf[i+1]) % 10;
+        sheepCount = (sheepCount + buf[i+2]) % 10;
+        clayCount = (clayCount + buf[i+3]) % 10;
+        wheatCount = (wheatCount + buf[i+4]) % 10;
+        rockCount = (rockCount + buf[i+5]) % 10;
         break;
       }
     }
