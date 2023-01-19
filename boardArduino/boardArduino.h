@@ -33,8 +33,8 @@
 #define VERTICES_Y1 64
 #define VERTICES_Y2 65
 #define VERTICES_Y3 66
-#define VERTICES_Y4 66
-#define VERTICES_Y5 67
+#define VERTICES_Y4 67
+#define VERTICES_Y5 68
 #define VERTICES_Y_NUM 6
 
 
@@ -242,7 +242,7 @@ void vertex_insert(lookup_t *dict, size_t VERTEX_Y, size_t VERTEX_X, size_t tile
     dict->vertex_storage[Y][2 * X + 1] = edge_ind;
 }
 
-size_t *vertex_lookup(lookup_t *dict, size_t EDGE_Y, size_t EDGE_X) {
+size_t *vertex_lookup(lookup_t *dict, size_t VERTEX_Y, size_t VERTEX_X) {
 size_t Y, X;
 
     switch (VERTEX_Y) {
@@ -297,7 +297,7 @@ void reedsw_insert(lookup_t *dict, size_t REEDSW_Y, size_t REEDSW_X, size_t tile
     dict->reedsw_storage[Y][2 * X] = tile_num;
 }
 
-size_t reedsw_lookup(lookup_t *dict, size_t EDGE_Y, size_t EDGE_X) {
+size_t reedsw_lookup(lookup_t *dict, size_t REEDSW_Y, size_t REEDSW_X) {
     size_t Y, X;
 
     switch (REEDSW_Y) {

@@ -9,7 +9,7 @@ player_t players[4];
 
 
 lookup_t *dict = (lookup_t *) malloc(sizeof(lookup_t));
-initDict(dict);
+//initDict(dict);
 
 
 void shuffle(int *array, size_t n)
@@ -376,20 +376,18 @@ void loop() {
         Serial.println(diceRollTotal);
     }
 
-    Serial.println("start ring msg");
+//    Serial.println("start ring msg");
     ringMessage();
-//
-    Serial.println("Done Ring msg");
-//
-    delay(1000);
-//  
+////
+//    Serial.println("Done Ring msg");
+////
+//    delay(1000);
+////  
     int aval = Serial1.available();
-//
-    for (int i = 0; i < aval; i++) {
-      char 
-      Serial.println((Serial1.read()));
 
-    }
+    for (int i = 0; i < aval; i++) {
+      Serial.println((Serial1.read()));
+   }
 
 
 
