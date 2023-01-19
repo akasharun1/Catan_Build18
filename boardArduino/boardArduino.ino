@@ -112,7 +112,7 @@ void ringMessage() {
     players[3].sheepCount = 4;
     players[3].clayCount = 3;
     players[3].wheatCount = 2;
-    players[3].rockCount = 1;  
+    players[3].rockCount = 1;   
 
     
     
