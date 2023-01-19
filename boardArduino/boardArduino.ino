@@ -2,6 +2,12 @@
 
 player_t players[4];
 
+
+//ControllerColors current_player;
+
+
+
+
 lookup_t *dict = (lookup_t *) malloc(sizeof(lookup_t));
 initDict(dict);
 
@@ -120,6 +126,7 @@ void ringMessage() {
         Serial1.write(players[i].wheatCount);
         Serial1.write(players[i].rockCount);
         Serial1.write(0x0);
+        Serial.write(0x0);
     }
     Serial1.write('e');
 
@@ -162,6 +169,7 @@ void initPlayers() {
 }
 
 void setup() {
+    Serial2.begin(9600);
     Serial1.begin(9600);
     Serial.begin(9600);
 
@@ -337,27 +345,37 @@ void testVertices() {
 }
 
 
-void checkEndTurnButtonStates() {
-
-    char byte;
-    int bytesAvail = Serial1.available();
-
-    for (int i = 0; i < bytesAvail; i++) {
-        byte = Serial1.read();
-        if (byte )
-
-
-      
-      Serial.println((Serial1.read()));
-
-    }
-
-
-}
+//void checkEndTurnButtonStates() {
+//
+//    char byte;
+//    int bytesAvail = Serial1.available();
+//
+//    for (int i = 0; i < bytesAvail; i++) {
+//        byte = Serial1.read();
+//        switch (byte) {
+//            case blueController: 
+//
+//
+//
+//
+//      
+//      Serial.println((Serial1.read()));
+//
+//    }
+//
+//
+//}
 
 
 void loop() {
     
+    // Recieve data from dice
+    if (Serial2.available() > 0) {
+        int diceRollTotal = Serial2.read();
+        Serial.print("dice roll is");
+        Serial.println(diceRollTotal);
+    }
+
     Serial.println("start ring msg");
     ringMessage();
 //

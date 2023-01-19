@@ -53,7 +53,8 @@ Encoder myEnc(ENC_CLK,ENC_DT);
 LedControl lc = LedControl(DataIn, Clk, CS, ChainLength);
 
 
-char endTurnSwitchState;
+char endTurnButtonState;
+char diceRollReadButtonState;
 char woodCount;
 char sheepCount;
 char clayCount;
@@ -149,10 +150,12 @@ void loop() {
         clayCount = (clayCount + buf[i+3]) % 10;
         wheatCount = (wheatCount + buf[i+4]) % 10;
         rockCount = (rockCount + buf[i+5]) % 10;
-        buf[i+6] = endTurnSwitchState;
+        buf[i+6] = endTurnButtonState;
+        buf[i+7] = diceRollReadButtonState;
         break;
       }
     }
+    Serial.write(buf);
   }
 
   // code for Switch
