@@ -129,12 +129,12 @@ void loop() {
     Serial.write(buf);
 
     for (int i = 0; i < iter; i++) {
-      if (buf[iter] == RingArduinoCode) {
-        woodCount += buf[iter+1];
-        sheepCount += buf[iter+2];
-        clayCount +=buf[iter+3];
-        wheatCount += buf[iter+4];
-        rockCount += buf[iter+5];
+      if (buf[i] == RingArduinoCode && iter >= i + 6) {
+        woodCount += buf[i+1];
+        sheepCount += buf[i+2];
+        clayCount += buf[i+3];
+        wheatCount += buf[i+4];
+        rockCount += buf[i+5];
         break;
       }
     }
