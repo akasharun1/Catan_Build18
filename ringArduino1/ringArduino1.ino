@@ -11,11 +11,11 @@ enum ControllerColors {
 };
 
 // Ring Arduino Specific
-#define RingArduinoCode orangeController
+#define RingArduinoCode blueController
 
 // Serial
-#define rxPin 10
-#define txPin 11
+#define rxPin 0
+#define txPin 1
 
 
 // 7-segment Control
@@ -116,33 +116,49 @@ void loop() {
 
   int messageLengthCount = 0;
 
-  // Message parsing and sending
-  if (mySerial.available() > 0) {
-      if (mySerial.read() == 's') {
-
-          // Stream starts with an s and ends with an e
-          mySerial.write('s');
-
-          char currRead;
-          while ((currRead = mySerial.read()) != 'e') {
-
-              // Each Arduino has a seperate Code after whose 7 bytes
-              // are data values relevant to it
-
-              if (currRead == RingArduinoCode) {
-                  woodCount += mySerial.read();
-                  sheepCount += mySerial.read();
-                  clayCount += mySerial.read();
-                  wheatCount += mySerial.read();
-                  rockCount += mySerial.read();
-              }
-              else {
-                  mySerial.write(currRead);
-              }
-          }
-
-          mySerial.write('e');
-      }
+  while(mySerial.available() > 0) {
+    mySerial.write(mySerial.read());
   }
+
+  // Message parsing and sending
+//  if (mySerial.available() > 0) {
+//      if (mySerial.read() == 's') {
+//
+//          // Stream starts with an s and ends with an e
+//          mySerial.write('s');
+//
+//         
+//          while (mySerial.available() <= 0) ;
+//          char currRead = mySerial.read();
+//          
+//          while (currRead != 'e' && (mySerial.available() > 4)) {
+//                
+//              // Each Arduino has a seperate Code after whose 7 bytes
+//              // are data values relevant to it
+//
+//              if (currRead == RingArduinoCode) {
+//                  mySerial.write(currRead);
+//                  currRead = mySerial.read();
+//                  //woodCount += mySerial.read();
+//                  //Serial.print(woodCount);
+//                  //sheepCount += mySerial.read();
+//                  //Serial.print(sheepCount);
+//                  //clayCount += mySerial.read();
+//                  //Serial.print(clayCount);
+//                  //wheatCount += mySerial.read();
+//                  //Serial.print(wheatCount);
+//                  //rockCount += mySerial.read();
+//                  //Serial.print(rockCount);
+//              }
+//              else {
+//                  mySerial.write(currRead);
+//                  currRead = mySerial.read();
+//              }
+//              
+//          }
+//
+//          mySerial.write('e');
+//      }
+//  }
 
 }

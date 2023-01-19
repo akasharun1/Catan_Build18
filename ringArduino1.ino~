@@ -1,0 +1,220 @@
+#include <SoftwareSerial.h>
+#include "LedControl.h"
+
+// Serial
+#define rxPin 10
+#define txPin 11
+
+// 7-segment Control
+#define DataIn 5
+#define Clk 7
+#define CS 6
+#define ChainLength 1
+#define LEDSIZE 5
+
+// Ring Arduino Specific
+#define RingArduinoNo 0
+
+
+
+
+
+// Set up a new SoftwareSerial object
+SoftwareSerial mySerial =  SoftwareSerial(rxPin, txPin);
+
+// Define pins for LedControl. These can be any digital pins on microcontroller.
+LedControl lc = LedControl(DataIn, Clk, CS, ChainLength);
+
+int woodCount;
+int sheepCount;
+int clayCount;
+int wheatCount;
+int ironCount;
+
+bool encoderSwitchState;
+
+int encoderRotaryState;
+
+
+
+/*===============================================================================
+   Subroutine - DspNumber (number, dsp, pos, dp, dpPos)
+
+   Recursively sets all the LED's
+
+   number = number to display
+   dsp = display to write the number on in the MAX7219 chain (0-7)
+   pos = position of first digit to write.  3 digits=2, 4 digit=3, 5 digit=4
+   dp = boolean flag whether to show a decimal point
+   dpPos = position to put the decimal point if there is one to show.
+
+   Default argument values can be useful to minimize the number of arguments that
+   need to be passed if items such as the decimal point or LED size do not change.
+   If you always want one digit to right of decimal point change dp=true, dpPos=1
+   as an example
+  =============================================================================== */
+void DspNumber(long number, int dsp = 0, byte pos = LEDSIZE - 1,
+               boolean dp = false, byte dpPos = 0) {
+
+  byte digit = number % 10;           // Get first digit on right
+
+  if (dp && dpPos == pos)             // Check if DP needs to be displayed
+    lc.setDigit(dsp, pos, digit, true); // Display digit with DP
+  else
+
+
+    lc.setDigit(dsp, pos, digit, false); // Display digit without DP
+
+  long remainingDigits = number / 10; // Check if another digit to display
+  if (remainingDigits > 0) {          // If there is, do it all again
+    DspNumber(remainingDigits, dsp,  pos - 1, dp, dpPos);
+  }
+}
+
+
+void setup()  {
+
+    // Setup for Software Serial
+    pinMode(rxPin, INPUT);
+    pinMode(txPin, OUTPUT);
+    mySerial.begin(9600);
+    ringArduinoState = 0;
+
+
+
+    woodCount = 0;
+    sheepCount = 0;
+
+
+}
+
+void loop() {
+
+    int messageLengthCount = 0;
+
+    if (mySerial.available() > 0) {
+        if (mySerial.read() == "s") {
+            Serial.println("State being transmitted over serial");
+            mySerial.write("s");
+
+            while (mySerial.read() != "e") {
+
+                if (mySerial.read("a") {
+                    mySerial.write{"a");
+                    for (int i = 0; i < 5; i++) {
+
+
+
+
+
+
+
+
+                    }
+
+
+
+
+                if (messageLengthCount < 2) {
+
+                }
+                if (messageLengthCount
+
+
+
+
+            }
+            mySerial.write("e");
+
+
+
+
+
+        ringArduinoState = mySerial.read();
+    }
+
+
+
+
+
+
+}
+
+
+
+long num = 0;           // Variable to hold counter number
+int loopCnt = 0;        // Variable to hold loop count number
+
+
+
+//===============================================================================
+//  Initialization
+//===============================================================================
+void setup() {
+  // Initialize all displays
+  for (int dsp = 0; dsp < lc.getDeviceCount(); dsp++) {
+    lc.setScanLimit(dsp, LEDSIZE); // Limit scan to size of LED module
+    lc.shutdown(dsp, false); // Wakeup display
+    lc.setIntensity(dsp, 2); // Set brightness to a lower level (1-15)
+    lc.clearDisplay(dsp);   // Clear the display
+  }
+
+  // Display all 8's and move a decimal point around all attached displays
+  // Any extra digits over LEDSIZE will not be displayed
+  for (int dsp = 0; dsp < lc.getDeviceCount(); dsp++) {
+    DspNumber( 88888, dsp, LEDSIZE - 1);
+  }
+  delay(1000);
+  for (int dsp = 0; dsp < lc.getDeviceCount(); dsp++) {
+    DspNumber (88888, dsp, LEDSIZE - 1, true, 0);
+    delay (1000);
+    DspNumber (88888, dsp, LEDSIZE - 1, true, 1);
+    delay (1000);
+    DspNumber (88888, dsp, LEDSIZE - 1, true, 2);
+    delay (1000);
+    DspNumber (88888, dsp, LEDSIZE - 1, true, 3);
+    delay (1000);
+    DspNumber (88888, dsp, LEDSIZE - 1, true, 4);
+    delay (1000);
+    DspNumber (88888, dsp, LEDSIZE - 1, false, 4);
+  }
+  // Display all digits from 9's to 1's on all attached displays
+  for (long iL = 99999; iL > 0; iL = iL - 11111) {
+    for (int dsp = 0; dsp < lc.getDeviceCount(); dsp++) {
+      DspNumber (iL, dsp);
+    }
+    delay (1000);
+  }
+  for (int dsp = 0; dsp < lc.getDeviceCount(); dsp++) {
+    lc.clearDisplay(dsp);   // Clear all displays
+  }
+}
+//===============================================================================
+//  Main
+//===============================================================================
+void loop() {
+  // Continually count up on first display in chain.
+  DspNumber (num);  // Using default argument values so only need number to display
+  num++;
+  delay(5);  // Slow things down a bit
+
+  // If max displayable value reached, reset count and clear the display
+  if ((LEDSIZE == 3 && num > 999) || (LEDSIZE == 4 && num > 9999) || (LEDSIZE == 5 &&
+      num > 99999)) {
+    num = 0;
+    lc.clearDisplay(0);   // Clear the display
+    // Count loop interations on 2nd display if one is attached
+    if (lc.getDeviceCount() > 1) { // We have 2nd display, so display loop count
+      DspNumber(++loopCnt, 1);
+      if ((LEDSIZE == 3 && loopCnt > 999) || (LEDSIZE == 4 && loopCnt > 9999) ||
+          (LEDSIZE == 5 && loopCnt > 99999)) {
+        loopCnt = 0;
+        lc.clearDisplay(1);
+      }
+    }
+  }
+}
+
+// https://lastminuteengineers.com/rotary-encoder-arduino-tutorial/
+// http://www.mathertel.de/Arduino/RotaryEncoderLibrary.aspx
+
