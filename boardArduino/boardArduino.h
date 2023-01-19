@@ -330,7 +330,7 @@ size_t reedsw_lookup(lookup_t *dict, size_t REEDSW_Y, size_t REEDSW_X) {
 
 // vertex_insert(dict, VERTICES_Y0, VERTICES_X0, TILE VALUE HERE, EDGE INDEX HERE);
 // vertex_insert(dict, VERTICES_Y5, VERTICES_X8, TILE VALUE HERE, EDGE INDEX HERE);
-// void initDict(lookup_t *dict) {
+void initDict(lookup_t *dict) {
 //     edge_insert(dict, EDGES_Y0, EDGES_X0, , );
 //     edge_insert(dict, EDGES_Y0, EDGES_X1, , );
 //     edge_insert(dict, EDGES_Y0, EDGES_X2, , );
@@ -471,22 +471,22 @@ size_t reedsw_lookup(lookup_t *dict, size_t REEDSW_Y, size_t REEDSW_X) {
 //     vertex_insert(dict, VERTICES_Y5, VERTICES_X8, , );
 
 
-//     reedsw_insert(dict, REEDSW_Y0, REEDSW_X0, 0);
-//     reedsw_insert(dict, REEDSW_Y0, REEDSW_X1, 1);
-//     reedsw_insert(dict, REEDSW_Y0, REEDSW_X2, 2);
-//     reedsw_insert(dict, REEDSW_Y1, REEDSW_X0, 3);
-//     reedsw_insert(dict, REEDSW_Y1, REEDSW_X1, 4);
-//     reedsw_insert(dict, REEDSW_Y1, REEDSW_X2, 5);
-//     reedsw_insert(dict, REEDSW_Y2, REEDSW_X0, 6);
-//     reedsw_insert(dict, REEDSW_Y2, REEDSW_X1, 7);
-//     reedsw_insert(dict, REEDSW_Y2, REEDSW_X2, 8);
-//     reedsw_insert(dict, REEDSW_Y3, REEDSW_X0, 9);
-//     reedsw_insert(dict, REEDSW_Y3, REEDSW_X1, 10);
-//     reedsw_insert(dict, REEDSW_Y3, REEDSW_X2, 11);
-//     reedsw_insert(dict, REEDSW_Y4, REEDSW_X0, 12);
-//     reedsw_insert(dict, REEDSW_Y4, REEDSW_X1, 13);
-//     reedsw_insert(dict, REEDSW_Y4, REEDSW_X2, 14);
-//     reedsw_insert(dict, REEDSW_Y5, REEDSW_X0, 15);
-//     reedsw_insert(dict, REEDSW_Y5, REEDSW_X1, 16);
-//     reedsw_insert(dict, REEDSW_Y5, REEDSW_X2, 17);
-// }
+    reedsw_insert(dict, REEDSW_Y0, REEDSW_X0, 0);
+    reedsw_insert(dict, REEDSW_Y0, REEDSW_X1, 1);
+    reedsw_insert(dict, REEDSW_Y0, REEDSW_X2, 2);
+    reedsw_insert(dict, REEDSW_Y1, REEDSW_X0, 3);
+    reedsw_insert(dict, REEDSW_Y1, REEDSW_X1, 4);
+    reedsw_insert(dict, REEDSW_Y1, REEDSW_X2, 5);
+    // reedsw_insert(dict, REEDSW_Y2, REEDSW_X0, 6);
+    // reedsw_insert(dict, REEDSW_Y2, REEDSW_X1, 7);
+    // reedsw_insert(dict, REEDSW_Y2, REEDSW_X2, 8);
+    // reedsw_insert(dict, REEDSW_Y3, REEDSW_X0, 9);
+    // reedsw_insert(dict, REEDSW_Y3, REEDSW_X1, 10);
+    // reedsw_insert(dict, REEDSW_Y3, REEDSW_X2, 11);
+    // reedsw_insert(dict, REEDSW_Y4, REEDSW_X0, 12);
+    // reedsw_insert(dict, REEDSW_Y4, REEDSW_X1, 13);
+    // reedsw_insert(dict, REEDSW_Y4, REEDSW_X2, 14);
+    // reedsw_insert(dict, REEDSW_Y5, REEDSW_X0, 15);
+    // reedsw_insert(dict, REEDSW_Y5, REEDSW_X1, 16);
+    // reedsw_insert(dict, REEDSW_Y5, REEDSW_X2, 17);
+}

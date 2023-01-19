@@ -5,12 +5,7 @@ player_t players[4];
 
 //ControllerColors current_player;
 
-
-
-
 lookup_t *dict = (lookup_t *) malloc(sizeof(lookup_t));
-//initDict(dict);
-
 
 void shuffle(int *array, size_t n)
 {
@@ -158,7 +153,6 @@ void initBoard() {
 }
 
 void initPlayers() {
-
     for (int i = 0; i < 4; i++) {
         players[i].woodCount = 0;
         players[i].sheepCount = 0;
@@ -173,8 +167,9 @@ void setup() {
     Serial1.begin(9600);
     Serial.begin(9600);
 
+    initDict();
     initPins();
-    initRing();
+    //initRing();
     initBoard();
     initPlayers();
 
@@ -203,7 +198,8 @@ int pollReedSwitch() {
 
     for (int i = REEDSW_X0; i < REEDSW_X2 + 1; i++) {
         digitalWrite(i, LOW);
-        for(int j = REEDSW_Y0; j < REEDSW_Y5 + 1; j++) {
+        // CHANGED FOR TESTING
+        for(int j = REEDSW_Y0; j < REEDSW_Y1 + 1; j++) {
             // We are assigning the tile number based on its location in the reed switch matrix
             if (digitalRead(j) == LOW) {
                 size_t tile = reedsw_lookup(dict, j, i);
@@ -269,18 +265,17 @@ int *testEdges() {
             if (digitalRead(j) == 0) {
                 int edgeRow = (i - EDGES_X0) >> 1;
                 int edgeCol = (j - EDGES_Y0) >> 1;
-                //return make_pair(edgeRow, edgeCol);
-                return NULL;
+                int *retVal = (int *) malloc(2 * sizeof(int));
+                retVal[0] = edgeRow;
+                retVal[1] = edgeCol;
+                return retVal;
             }
         }
         digitalWrite(i, HIGH);
     }
 
-    //return make_pair(-1, -1);
     return NULL;
 }
-
-
 
 int *pollVertices() {
     digitalWrite(VERTICES_X0, HIGH);
@@ -311,7 +306,7 @@ int *pollVertices() {
     return NULL;
 }
 
-void testVertices() {
+int *testVertices() {
     digitalWrite(VERTICES_X0, HIGH);
     digitalWrite(VERTICES_X1, HIGH);
     digitalWrite(VERTICES_X2, HIGH);
@@ -331,17 +326,16 @@ void testVertices() {
                 int vertexRow = i - VERTICES_X0;
                 int vertexCol = j - VERTICES_Y0;
 
-                Serial.println("vertex row is:");
-                Serial.println(vertexRow);
-                Serial.println("vertex col is:");
-                Serial.println(vertexCol);
-                return;
+                int *retVal = (int *) malloc(2 * sizeof(int));
+                retVal[0] = edgeRow;
+                retVal[1] = edgeCol;
+                return retVal;
             }
         }
         digitalWrite(i, HIGH);
     }
 
-    Serial.println(-1);
+    return NULL;
 }
 
 
@@ -368,6 +362,28 @@ void testVertices() {
 
 
 void loop() {
+    int val;
+    int *res;
+    while(1) {
+        if((val = pollReedSwitch()) != 18) {
+            Serial.print("Robber value is ");
+            Serial.println(val);
+        }
+        if((res = testEdges()) != NULL) {
+            Serial.print("EDGEX, EDGEY: ");
+            Serial.print(res[0]);
+            Serial.println(res[1]);
+
+            free(res);
+        }
+        if((res = testVertices()) != NULL) {
+            Serial.print("VERTX, VERTY: ");
+            Serial.print(res[0]);
+            Serial.println(res[1]);
+
+            free(res);
+        }
+    }
     
     // Recieve data from dice
     if (Serial2.available() > 0) {
@@ -376,34 +392,10 @@ void loop() {
         Serial.println(diceRollTotal);
     }
 
-//    Serial.println("start ring msg");
     ringMessage();
-////
-//    Serial.println("Done Ring msg");
-////
-//    delay(1000);
-////  
-    int aval = Serial1.available();
 
+    int aval = Serial1.available();
     for (int i = 0; i < aval; i++) {
       Serial.println((Serial1.read()));
-   }
-
-
-
-    //Serial.println(Serial1.read());
-    //while (Serial1.available() > 0) Serial.println(Serial1.read());
-    
- 
-
-
-
-
-
-
-
-    
-
-    
-
+    }
 }
