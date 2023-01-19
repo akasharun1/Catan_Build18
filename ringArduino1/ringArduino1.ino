@@ -126,7 +126,18 @@ void loop() {
 
   if (iter != 0) {
     buf[iter] = '\0';
-    Serial.writeString(buf);
+    Serial.write(buf);
+
+    for (int i = 0; i < iter; i++) {
+      if (buf[iter] == RingArduinoCode) {
+        woodCount += buf[iter+1];
+        sheepCount += buf[iter+2];
+        clayCount +=buf[iter+3];
+        wheatCount += buf[iter+4];
+        rockCount += buf[iter+5];
+        break;
+      }
+    }
   }
 
 }
