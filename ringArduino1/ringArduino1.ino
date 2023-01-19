@@ -13,10 +13,6 @@ enum ControllerColors {
 // Ring Arduino Specific
 #define RingArduinoCode blueController
 
-// Serial
-#define rxPin 0
-#define txPin 1
-
 
 // 7-segment Control
 #define DataIn 5
@@ -50,11 +46,6 @@ enum ControllerColors {
 Encoder myEnc(ENC_CLK,ENC_DT);
 //   avoid using pins with LEDs attached
 
-
-
-// Set up a new SoftwareSerial object
-SoftwareSerial mySerial =  SoftwareSerial(rxPin, txPin);
-
 // Define pins for LedControl. These can be any digital pins on microcontroller.
 LedControl lc = LedControl(DataIn, Clk, CS, ChainLength);
 
@@ -76,7 +67,6 @@ void setup() {
 
   pinMode(rxPin, INPUT);
   pinMode(txPin, OUTPUT);
-  mySerial.begin(9600);
 
   pinMode(ENC_SW, INPUT);
 
@@ -94,8 +84,6 @@ void setup() {
     lc.setIntensity(dsp, 2); // Set brightness to a lower level (1-15)
     lc.clearDisplay(dsp);   // Clear the display
   }
-
-
 
 
 }
@@ -116,48 +104,48 @@ void loop() {
 
   int messageLengthCount = 0;
 
-  while(mySerial.available() > 0) {
-    mySerial.write(mySerial.read());
+  while(Serial.available() > 0) {
+    Serial.write(Serial.read());
   }
 
   // Message parsing and sending
-//  if (mySerial.available() > 0) {
-//      if (mySerial.read() == 's') {
-//
+//  if (Serial.available() > 0) {
+//      if (Serial.read() == 's') {
+
 //          // Stream starts with an s and ends with an e
-//          mySerial.write('s');
-//
-//         
-//          while (mySerial.available() <= 0) ;
-//          char currRead = mySerial.read();
-//          
-//          while (currRead != 'e' && (mySerial.available() > 4)) {
-//                
+//          Serial.write('s');
+
+        
+//          while (Serial.available() <= 0) ;
+//          char currRead = Serial.read();
+         
+//          while (currRead != 'e' && (Serial.available() > 4)) {
+               
 //              // Each Arduino has a seperate Code after whose 7 bytes
 //              // are data values relevant to it
-//
+
 //              if (currRead == RingArduinoCode) {
-//                  mySerial.write(currRead);
-//                  currRead = mySerial.read();
-//                  //woodCount += mySerial.read();
+//                  Serial.write(currRead);
+//                  currRead = Serial.read();
+//                  //woodCount += Serial.read();
 //                  //Serial.print(woodCount);
-//                  //sheepCount += mySerial.read();
+//                  //sheepCount += Serial.read();
 //                  //Serial.print(sheepCount);
-//                  //clayCount += mySerial.read();
+//                  //clayCount += Serial.read();
 //                  //Serial.print(clayCount);
-//                  //wheatCount += mySerial.read();
+//                  //wheatCount += Serial.read();
 //                  //Serial.print(wheatCount);
-//                  //rockCount += mySerial.read();
+//                  //rockCount += Serial.read();
 //                  //Serial.print(rockCount);
 //              }
 //              else {
-//                  mySerial.write(currRead);
-//                  currRead = mySerial.read();
+//                  Serial.write(currRead);
+//                  currRead = Serial.read();
 //              }
-//              
+             
 //          }
-//
-//          mySerial.write('e');
+
+//          Serial.write('e');
 //      }
 //  }
 
