@@ -89,7 +89,6 @@ void setup() {
 }
 
 void loop() {
-
   size_t newPosition = myEnc.read();
   if (newPosition != oldPosition) {
     oldPosition = newPosition;
@@ -107,47 +106,27 @@ void loop() {
 //  while(Serial.available() > 0) {
 //    Serial.write(Serial.read());
 //  }
+  char buf[64];
+  int iter = 0;
+  int currRead = 0;
 
+  if (Serial.available() <= 0) {
+    currRead = 'e';
+  } else {
+    currRead = Serial.read();
+  }
+  
   // Message parsing and sending
-  if (Serial.available() > 0) {
-      if (Serial.read() == 's') {
+  while ((currRead != 'e')) {
+    buf[iter] = currRead;
+    iter++;
+    while (Serial.available() <= 0);
+    currRead = Serial.read();
+  }
 
-          // Stream starts with an s and ends with an e
-          Serial.write('s');
-
-        
-          while (Serial.available() <= 0) ;
-          char currRead = Serial.read();
-         
-          while (currRead != 'e' && (Serial.available() > 5)) {
-               
-              // Each Arduino has a seperate Code after whose 7 bytes
-              // are data values relevant to it
-
-              if (currRead == RingArduinoCode) {
-                  Serial.write(currRead);
-                  currRead = Serial.read();
-//                  woodCount += Serial.read();
-//                  Serial.write(woodCount);
-//                  sheepCount += Serial.read();
-//                  Serial.write(sheepCount);
-//                  clayCount += Serial.read();
-//                  Serial.write(clayCount);
-//                  wheatCount += Serial.read();
-//                  Serial.write(wheatCount);
-//                  rockCount += Serial.read();
-//                  Serial.write(rockCount);
-//                  currRead = Serial.read();
-              }
-              else {
-                  Serial.write(currRead);
-                  currRead = Serial.read();
-              }
-             
-          }
-
-          Serial.write('e');
-      }
+  if (iter != 0) {
+    buf[iter] = '\0';
+    Serial.writeString(buf);
   }
 
 }
