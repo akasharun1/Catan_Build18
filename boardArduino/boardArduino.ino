@@ -339,10 +339,14 @@ void testVertices() {
 
 void checkEndTurnButtonStates() {
 
-    char by
+    char byte;
     int bytesAvail = Serial1.available();
 
     for (int i = 0; i < bytesAvail; i++) {
+        byte = Serial1.read();
+        if (byte )
+
+
       
       Serial.println((Serial1.read()));
 
