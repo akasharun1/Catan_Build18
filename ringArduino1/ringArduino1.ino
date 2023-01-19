@@ -30,15 +30,16 @@ enum ControllerColors {
 #define WOOD 4
 #define SHEEP 5
 
-
 // Encoder Specifics
 #define ENC_CLK 2
 #define ENC_DT 3
 #define ENC_SW 4
 
+// Switch Specifics
+#define SWITCH_UP 10
+#define SWITCH_DOWN 11
+
 #define STEPSIZE 4
-
-
 
 // Change these two numbers to the pins connected to your encoder.
 //   Best Performance: both pins have interrupt capability
@@ -72,6 +73,8 @@ void setup() {
 
   //pinMode(rxPin, INPUT);
   //pinMode(txPin, OUTPUT);
+  pinMode(SWITCH_UP, INPUT_PULLUP);
+  pinMode(SWITCH_DOWN, INPUT_PULLUP);
 
   pinMode(ENC_SW, INPUT);
 
@@ -150,6 +153,17 @@ void loop() {
         break;
       }
     }
+  }
+
+  // code for Switch
+  if (digitalRead(SWITCH_UP) == LOW) {
+    Serial.println("UP");
+  }
+  else if (digitalRead(SWITCH_DOWN) == LOW) {
+    Serial.println("DOWN");
+  }
+  else {
+    Serial.println("NONE");
   }
 
 }
