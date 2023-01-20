@@ -166,6 +166,7 @@ void setup() {
     Serial2.begin(9600);
     Serial1.begin(9600);
     Serial.begin(9600);
+    pixels.begin();
 
     initDict(dict);
     initPins();
@@ -202,7 +203,10 @@ int pollReedSwitch() {
         for(int j = REEDSW_Y0; j < REEDSW_Y1 + 1; j++) {
             // We are assigning the tile number based on its location in the reed switch matrix
             if (digitalRead(j) == LOW) {
-                size_t tile = reedsw_lookup(dict, j, i);
+                Serial.print(i);
+                Serial.print(", ");
+                Serial.print(j);
+                size_t tile = reedsw_lookup(dict, i, j);
                 return tile == -1 ? 18 : tile;
             }
         }
@@ -362,6 +366,17 @@ int *testVertices() {
 
 
 void loop() {
+    while(1) {
+      pixels.clear();
+      for (int i = 0; i < 66; i++) {
+        pixels.setBrightness(255);
+        pixels.setPixelColor(i, pixels.Color(0, 150, 0));
+        delay(250);
+        pixels.show();
+      }
+      
+    }
+
     int val;
     int *res;
     while(1) {
@@ -372,6 +387,7 @@ void loop() {
         if((res = testEdges()) != NULL) {
             Serial.print("EDGEX, EDGEY: ");
             Serial.print(res[0]);
+            Serial.print(", ");
             Serial.println(res[1]);
 
             free(res);
@@ -380,6 +396,7 @@ void loop() {
         if((res = testVertices()) != NULL) {
             Serial.print("VERTX, VERTY: ");
             Serial.print(res[0]);
+            Serial.print(", ");
             Serial.println(res[1]);
 
             free(res);
@@ -401,3 +418,4 @@ void loop() {
       Serial.println((Serial1.read()));
     }
 }
+
