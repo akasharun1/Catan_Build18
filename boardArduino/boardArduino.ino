@@ -285,8 +285,6 @@ int *pollVertices() {
         for(int j = VERTICES_Y0; j < VERTICES_Y5 + 1; j++) {
             // We are assigning the tile number based on its location in the reed switch matrix
             if (digitalRead(j) == LOW) {
-                delay(40);
-                if (digitalRead(j) != LOW) continue;
                 int vertexRow = i - VERTICES_X0;
                 int vertexCol = j - VERTICES_Y0;
                 
@@ -441,7 +439,7 @@ playerOnVertex_t playerOnVertex(building_t type) {
     return playerInfo;
 }
 
-void passOutCards(int diceRollTotal) {
+void passOutCards (int diceRollTotal) {
     for (int i = 0; i < 19; i++) {
         if (game_board->tiles[i].num == diceRollTotal) {
             switch (game_board->tiles[i].type) {
