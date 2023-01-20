@@ -1,11 +1,23 @@
 #include "boardArduino.h"
 
+// players[0] == blue
+// players[1] == red
+// players[2] == green
+// players[3] == orange
 player_t players[4];
 
+ControllerColors players_move = blueController;
+Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIN, NEO_GRB + NEO_KHZ800);
 
-//ControllerColors current_player;
+char endTurnButtonState;
+char diceRollReadButtonState;
+
+// Digital read for the bool edgeOrVertexPressedState. Please use variable name below!!
+bool edgeOrVertexPressedState;
+
 
 lookup_t *dict = (lookup_t *) malloc(sizeof(lookup_t));
+board_t *board_state = NULL;
 
 void shuffle(int *array, size_t n)
 {
@@ -73,7 +85,6 @@ void initPins() {
 }
 
 
-
 void initRing() {
 
     Serial.write(PLAYER0);
@@ -82,35 +93,6 @@ void initRing() {
 
 
 void ringMessage() {
-
-    players[0].woodCount = 5;
-    players[0].sheepCount = 4;
-    players[0].clayCount = 3;
-    players[0].wheatCount = 2;
-    players[0].rockCount = 1;
-
-    
-    players[1].woodCount = 5;
-    players[1].sheepCount = 4;
-    players[1].clayCount = 3;
-    players[1].wheatCount = 2;
-    players[1].rockCount = 1;
-
-    
-    players[2].woodCount = 5;
-    players[2].sheepCount = 4;
-    players[2].clayCount = 3;
-    players[2].wheatCount = 2;
-    players[2].rockCount = 1;
-
-    players[3].woodCount = 5;
-    players[3].sheepCount = 4;
-    players[3].clayCount = 3;
-    players[3].wheatCount = 2;
-    players[3].rockCount = 1;   
-
-    
-    
     Serial1.write('s');
 
     for(int i = 0; i < 4; i++) {
@@ -125,9 +107,16 @@ void ringMessage() {
     }
     Serial1.write('e');
 
+    for (int i = 0; i < 4; i++) {
+        players[i].woodCount = 0;
+        players[i].sheepCount = 0;
+        players[i].clayCount = 0;
+        players[i].wheatCount = 0;
+        players[i].rockCount = 0;
+    }
 }
 
-void initBoard() {
+board_t *initBoard() {
     resource_t resources[19] = {desert, wood, wood, wood, wood, clay, clay, clay, sheep, sheep, sheep, sheep, wheat, wheat, wheat, wheat, rock, rock, rock};
     int nums[18] = {2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12};
 
@@ -148,8 +137,7 @@ void initBoard() {
         }
     }
 
-    //return game_board;
-    return;
+    return game_board;
 }
 
 void initPlayers() {
@@ -171,12 +159,12 @@ void setup() {
     initDict(dict);
     initPins();
     //initRing();
-    initBoard();
+    board_state = initBoard();
     initPlayers();
 
     delay(3000);
 
-    ringMessage();
+    //ringMessage();
 
 //    Serial.println("Done Ring msg");
 //
@@ -190,7 +178,6 @@ void setup() {
 
 
 }
-
 
 int pollReedSwitch() {
     digitalWrite(REEDSW_X0, HIGH);
@@ -298,6 +285,8 @@ int *pollVertices() {
         for(int j = VERTICES_Y0; j < VERTICES_Y5 + 1; j++) {
             // We are assigning the tile number based on its location in the reed switch matrix
             if (digitalRead(j) == LOW) {
+                delay(40);
+                if (digitalRead(j) != LOW) continue;
                 int vertexRow = i - VERTICES_X0;
                 int vertexCol = j - VERTICES_Y0;
                 
@@ -342,39 +331,256 @@ int *testVertices() {
     return NULL;
 }
 
+void checkButtonStates() {
+  char currRead;
+  int iter = 0;
 
-//void checkEndTurnButtonStates() {
-//
-//    char byte;
-//    int bytesAvail = Serial1.available();
-//
-//    for (int i = 0; i < bytesAvail; i++) {
-//        byte = Serial1.read();
-//        switch (byte) {
-//            case blueController: 
-//
-//
-//
-//
-//      
-//      Serial.println((Serial1.read()));
-//
-//    }
-//
-//
-//}
+  if (Serial.available() <= 0) {
+    return
+  } else {
+    currRead = Serial.read();
+  }
+  
+  // Message parsing and sending
+  while ((currRead != 'e')) {
+    buf[iter] = currRead;
+    iter++;
+    while (Serial.available() <= 0);
+    currRead = Serial.read();
+  }
+  buf[iter] = 'e';
+  iter++;
+
+    if (iter != 1) {
+        buf[iter] = '\0';
+    }
+
+    endTurnButtonState = 0x0;
+    diceRollReadButtonState = 0x0;
 
 
+    for (int i = 0; i < iter; i+=8) {
+        switch (buf[i]) {
+            case (blueController):
+                if (players_move == blueController) {
+                    endTurnButtonState = buf[i+6];
+                    diceRollReadButtonState = buf[i+7];
+                }
+                break;
+            case (redController):
+                if (players_move == redController) {
+                    endTurnButtonState = buf[i+6];
+                    diceRollReadButtonState = buf[i+7];
+                }
+                break;
+            case (orangeController):
+                if (players_move == orangeController) {
+                    endTurnButtonState = buf[i+6];
+                    diceRollReadButtonState = buf[i+7];
+                }
+                break;
+            case (greenController):
+                if (players_move == orangeController) {
+                    endTurnButtonState = buf[i+6];
+                    diceRollReadButtonState = buf[i+7];
+                }
+                break
+            default case:
+                break;
+        }
+    }
+}
+
+playerOnVertex_t playerOnVertex(building_t type) {
+    playerOnVertex_t playerInfo;
+    // checking vertices on the tiles
+    for (int i = 0; i < 6; i++) {
+        switch(tile.vertices[i].type) {
+            case (none): 
+                playerInfo.itemCount = -1;
+                playerInfo.playerIndex = 0; 
+                break;
+            case (blue_settlement): 
+                playerInfo.itemCount = 1;
+                playerInfo.playerIndex = 0; 
+                break;   
+            case (blue_city):
+                playerInfo.itemCount = 2;
+                playerInfo.playerIndex = 0; 
+                break;
+            case (green_settlement):
+                playerInfo.itemCount = 1;
+                playerInfo.playerIndex = 1; 
+                break;
+            case (green_city):
+                playerInfo.itemCount = 2;
+                playerInfo.playerIndex = 1; 
+                break;
+            case (red_settlement):
+                playerInfo.itemCount = 1;
+                playerInfo.playerIndex = 2; 
+                break;
+            case (red_city):
+                playerInfo.itemCount = 2;
+                playerInfo.playerIndex = 2; 
+                break;
+            case (orange_settlement):
+                playerInfo.itemCount = 1;
+                playerInfo.playerIndex = 3; 
+                break;
+            case (orange_city):
+                playerInfo.itemCount = 2;
+                playerInfo.playerIndex = 3; 
+                break;
+            default case:
+                playerInfo.itemCount = -1;
+                playerInfo.playerIndex = 0; 
+                break; 
+        }
+    }
+    return playerInfo;
+}
+
+void passOutCards(int diceRollTotal) {
+    for (int i = 0; i < 19; i++) {
+        if (game_board->tiles[i].num == diceRollTotal) {
+            switch (game_board->tiles[i].type) {
+                case (desert):
+                    break;
+                case (rock):
+                    for (int j = 0; j < 6; j++) {
+                        playerOnVertex_t playerInfo = playerOnVertex(game_board->tiles[i].vertices[j].type);
+                        if (playerInfo.playerIndex != -1) {
+                            players[playerInfo.playerIndex].rockCount += playerInfo.itemCount;
+                        }
+                    }
+                    break;
+                case (clay):
+                    for (int j = 0; j < 6; j++) {
+                        playerOnVertex_t playerInfo = playerOnVertex(game_board->tiles[i].vertices[j].type);
+                        if (playerInfo.playerIndex != -1) {
+                            players[playerInfo.playerIndex].clayCount += playerInfo.itemCount;
+                        }
+                    }
+                    break;
+                case (wood):
+                    for (int j = 0; j < 6; j++) {
+                        playerOnVertex_t playerInfo = playerOnVertex(game_board->tiles[i].vertices[j].type);
+                        if (playerInfo.playerIndex != -1) {
+                            players[playerInfo.playerIndex].woodCount += playerInfo.itemCount;
+                        }
+                    }
+                    break;
+                case (wheat):
+                    for (int j = 0; j < 6; j++) {
+                        playerOnVertex_t playerInfo = playerOnVertex(game_board->tiles[i].vertices[j].type);
+                        players[playerInfo.playerIndex].wheatCount += playerInfo.itemCount;
+                    }
+                    break;
+                case (sheep):
+                    for (int j = 0; j < 6; j++) {
+                        playerOnVertex_t playerInfo = playerOnVertex(game_board->tiles[i].vertices[j].type);
+                        if (playerInfo.playerIndex != -1) {
+                            players[playerInfo.playerIndex].sheepCount += playerInfo.itemCount;
+                        }
+                    }
+                    break;
+                default case:
+                    break;
+            }
+        }
+    }
+}
+
+bool edgeOrVertexPressed = false;
+bool prevEdgeOrVertexPressed = false;
+bool readDice = false;
+bool prevDiceButtonState = false;
+    
 void loop() {
+    // Recieve data from dice
+    if (diceRollReadButtonState != prevDiceRollButtonState) {
+        if (diceRollReadButtonState == true) {
+            readDice = true;
+        }
+    }
+    prevDiceRollButtonState = diceRollButtonState;
+
+    if (Serial2.available() > 0 & readDice) {
+        int diceRollTotal = Serial2.read();
+        
+        // Set the player resource variables in this function
+        // NEED TO CALL pollReedSwitch to check where robber is in here
+        passOutCards(diceRollTotal);
+
+        // Send the message with the cards
+        ringMessage();
+        readDice = false;
+    }
+
+    // Set vertexState when an vertex is pressed
+    if (edgeOrVertexPressedState != prevEdgeOrVertexState) {
+        if (edgeOrVertexPressedState == true) {
+            edgeOrVertexPressed = true;
+        }
+    }
+    prevEdgeOrVertexPressed = edgeOrVertexPressedState;
+    
+    if (endTurnButtonState) {
+        endTurnButtonState = 0x0;
+        players_move = (players_move == orangeController) ? blueController : players_move + 1;
+    }
+
+    int *activeEdge = pollEdges();
+    int *activeVertex = pollVertices();
+
+    // Account for edges on one tile ********
+    // update Edges based on active pressed
+    if (activeEdge != NULL & edgeOrVertexPressed) {
+        // Tile1, Edge1, Tile2, Edge2    
+        if (activeVertex[0] != -1) {
+            building_t roadType1 = board_state->tiles[activeEdge[0]].edges[activeEdge[1]].type;
+            board_state->tiles[activeEdge[0]].edges[activeEdge[1]].type = updateRoadColor(roadType1);
+        }
+        
+        if (activeVertex[2] != -1) {
+            building_t roadType2 = board_state->tiles[activeEdge[2]].edges[activeEdge[3]].type;
+            board_state->tiles[activeVertex[2]].edges[activeEdge[3]].type = updateRoadColor(roadType2);
+        }
+    }
+
+    // update Vertices based on active pressed
+    else if (activeVertex != NULL & edgeOrVertexPressed) {
+        // [Tile1, Vert1, Tile2, Vert2, Tile3, Vert3]
+        // Need to figure out which tiles have active vertexes and update all of them
+        if (activeVertex[0] != -1) {
+            building_t buildingType1 = board_state->tiles[activeVertex[0]].vertices[activeVertex[1]].type;
+            board_state->tiles[activeVertex[0]].vertices[activeVertex[1]].type = updateBuildingType(buildingType1);
+        }
+        
+        if (activeVertex[2] != -1) {
+            building_t buildingType2 = board_state->tiles[activeVertex[2]].vertices[activeVertex[3]].type;
+            board_state->tiles[activeVertex[2]].vertices[activeVertex[3]].type = updateBuildingType(buildingType2);
+        }
+        if (activeVertex[4] != -1) {
+            building_t buildingType3 = board_state->tiles[activeVertex[4]].vertices[activeVertex[5]].type;
+            board_state->tiles[activeVertex[4]].vertices[activeVertex[5]].type = updateBuildingType(buildingType3);
+        }
+    }
+    edgeOrVertexPressed = false;
+    
+    updatePixelColors();
+    
+    // TESTING CODE BELOW HERE, DONT MODIFY
+    continue;    
     while(1) {
       pixels.clear();
-      for (int i = 0; i < 66; i++) {
+      for (int i = 0; i < NUMPIXELS; i++) {
         pixels.setBrightness(255);
         pixels.setPixelColor(i, pixels.Color(0, 150, 0));
         delay(250);
         pixels.show();
       }
-      
     }
 
     int val;
@@ -404,18 +610,123 @@ void loop() {
         }
     }
     
-    // Recieve data from dice
-    if (Serial2.available() > 0) {
-        int diceRollTotal = Serial2.read();
-        Serial.print("dice roll is");
-        Serial.println(diceRollTotal);
-    }
-
     ringMessage();
 
     int aval = Serial1.available();
     for (int i = 0; i < aval; i++) {
-      Serial.println((Serial1.read()));
+        Serial.println((Serial1.read()));
+    }
+}
+
+building_t updateBuildingType(building_t buildingType) {
+    if (buildingType == none) {
+        switch(players_move) {
+            case (blueController): 
+                return blue_settlement;
+            case (redController):
+                return red_settlement;
+            case (greenController):
+                return green_settlement;
+            case (orangeController):
+                return orange_settlement;
+            default case:
+                return none;
+        }
+    }
+    else if (buildingType == blue_settlement | buildingType == green_settlement 
+            buildingType == red_settlement | buildingType == orange_settlement) {
+        switch(players_move) {
+            case (blueController): 
+                return blue_city;
+            case (redController):
+                return red_city;
+            case (greenController):
+                return green_city;
+            case (orangeController):
+                return orange_city;
+            default case:
+                return none;
+        }
+    }
+    else {
+        return none;
+    }
+}
+
+building_t updateRoadColor(building_t buildingType) {
+    if (buildingType == none) {
+        switch(players_move) {
+            case (blueController): 
+                return blue_settlement;
+            case (redController):
+                return red_settlement;
+            case (greenController):
+                return green_settlement;
+            case (orangeController):
+                return orange_settlement;
+            default case:
+                return none;
+        }
+    }
+    else {
+        return none;
+    }
+}
+
+void updatePixelColors() {
+    for (int i = 0; i < 19; i++) {
+        // for edges
+        for (int j = 0; j < 6; j ++) {
+            edge_t edge = game_board->tiles[i].edges[j];
+            switch (edge.type) {
+                case (none):
+                    pixels.setPixelColor(edge.ledID1, pixels.Color(0, 0, 0));
+                    pixels.setPixelColor(edge.ledID2, pixels.Color(0, 0, 0));
+                    break;
+                case (blue_settlement | blue_city):
+                    pixels.setPixelColor(edge.ledID1, pixels.Color(0, 0, 150));
+                    pixels.setPixelColor(edge.ledID2, pixels.Color(0, 0, 150));
+                    break;
+                case (green_settlement | green_city):
+                    pixels.setPixelColor(edge.ledID1, pixels.Color(0, 150, 0));
+                    pixels.setPixelColor(edge.ledID2, pixels.Color(0, 150, 0));
+                    break;
+                case (red_settlement | red_city):
+                    pixels.setPixelColor(edge.ledID1, pixels.Color(150, 0, 0));
+                    pixels.setPixelColor(edge.ledID2, pixels.Color(150, 0, 0));
+                    break;
+                case (orange_settlement | orange_city):
+                    pixels.setPixelColor(edge.ledID1, pixels.Color(150, 75, 0));
+                    pixels.setPixelColor(edge.ledID2, pixels.Color(150, 75, 0));
+                    break;
+                default case:
+                    break;
+            }
+        }
+        for (int k = 0; k < 6; k++) {
+            vertex_t vertex = game_board->tiles[i].vertices[k];
+            switch (game_board->tiles[i].vertices[k].type) {
+                switch (vertex.type) {
+                    case (none):
+                        pixels.setPixelColor(vertex.ledID, pixels.Color(0, 0, 0));
+                        break;
+                    case (blue_settlement | blue_city):
+                        pixels.setPixelColor(vertex.ledID, pixels.Color(0, 0, 150));
+                        break;
+                    case (green_settlement | green_city):
+                        pixels.setPixelColor(vertex.ledID, pixels.Color(0, 150, 0));
+                        break;
+                    case (red_settlement | red_city):
+                        pixels.setPixelColor(vertex.ledID, pixels.Color(150, 0, 0));
+                        break;
+                    case (orange_settlement | orange_city):
+                        pixels.setPixelColor(vertex.ledID, pixels.Color(150, 75, 0));
+                        break;
+                    default case:
+                        break;
+                }   
+            }
+        }
     }
 }
 

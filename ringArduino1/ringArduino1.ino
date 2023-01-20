@@ -15,7 +15,6 @@ enum ControllerColors {
 // Ring Arduino Specific
 #define RingArduinoCode blueController
 
-
 // 7-segment Control
 #define DataIn 5
 #define Clk 7
@@ -38,7 +37,6 @@ enum ControllerColors {
 // Switch Specifics
 #define SWITCH_UP 10
 #define SWITCH_DOWN 11
-
 #define STEPSIZE 4
 
 // Change these two numbers to the pins connected to your encoder.
@@ -105,8 +103,8 @@ void loop() {
   }
 
   lc.setDigit(0, LEDSIZE - 1, woodCount, (newPosition/STEPSIZE) % 5 == 0);
-  lc.setDigit(0, LEDSIZE - 2, sheepCount, (newPosition/STEPSIZE) % 5 == 1);
-  lc.setDigit(0, LEDSIZE - 3, clayCount, (newPosition/STEPSIZE) % 5 == 2);
+  lc.setDigit(0, LEDSIZE - 2, clayCount, (newPosition/STEPSIZE) % 5 == 1);
+  lc.setDigit(0, LEDSIZE - 3, sheepCount, (newPosition/STEPSIZE) % 5 == 2);
   lc.setDigit(0, LEDSIZE - 4, wheatCount, (newPosition/STEPSIZE) % 5 == 3);
   lc.setDigit(0, LEDSIZE - 5, rockCount, (newPosition/STEPSIZE) % 5 == 4);
 

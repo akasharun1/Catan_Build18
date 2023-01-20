@@ -3,9 +3,9 @@
 #include <Adafruit_NeoPixel.h>
 
 #define NEOPIN 22
-#define NUMPIXELS 66
+#define NUMPIXELS 6 * 33
 
-Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIN, NEO_GRB + NEO_KHZ800);
+
 
 
 #define PLAYER0 60
@@ -66,7 +66,6 @@ Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIN, NEO_GRB + NEO_KHZ800);
 #define EDGES_Y5 53
 #define EDGES_Y_NUM 6
 
-
 #define DiceTX 16
 #define DiceRX 17
 
@@ -83,7 +82,7 @@ enum ControllerColors {
   orangeController = 63
 };
 
- enum resource_t{
+enum resource_t{
     desert = 0,
     rock,
     clay,
@@ -143,6 +142,11 @@ struct board_t {
     tile_t tiles[19]; // Tile IDs are assigned by reed switch value
 };
 
+struct playerOnVertex_t {
+    int itemCount;
+    int playerIndex;
+}
+
 struct lookup_t {
     // Multiplied by two so that lookup will give tile number and index in respective array
     // Multiplied by three because vertices can be on up to 3 tiles
@@ -181,6 +185,43 @@ void edge_insert(lookup_t *dict, size_t EDGE_Y, size_t EDGE_X, size_t tile_num1,
     }
 
     if (X == -1 || Y == -1) return;
+
+    int ledID1, ledID2;
+
+    switch (X) {
+        case 0: {
+            ledID1 = 33 * Y + 18;
+            ledID2 = 33 * Y + 19;
+            break;
+        }
+        case 1 ... 9: {
+            ledID1 = 33 * Y + 2 * (X - 1);
+            ledID2 = 33 * Y + 2 * (X - 1) + 1;
+            break;
+        }
+        case 10: {
+            ledID1 = 33 * Y + 22;
+            ledID2 = 33 * Y + 23;
+            break;
+        }
+        case 11: {
+            ledID1 = 33 * Y + 20;
+            ledID2 = 33 * Y + 21;
+            break;
+        }
+        default: Serial.println("LED NOT RECOGNIZED");
+    }
+
+    board->tile[tile_num1].edges[vert_ind1].ledID1 = ledID1;
+    board->tile[tile_num1].edges[vert_ind1].ledID2 = ledID2;
+    if (tile_num2 != -1) {
+        board->tile[tile_num2].edges[vert_ind2].ledID1 = ledID1;
+        board->tile[tile_num2].edges[vert_ind2].ledID2 = ledID2;
+    }
+    if (tile_num3 != -1) {
+        board->tile[tile_num3].edges[vert_ind3].ledID1 = ledID1;
+        board->tile[tile_num3].edges[vert_ind3].ledID2 = ledID2;
+    }
 
     dict->edge_storage[Y][4 * X] = tile_num1;
     dict->edge_storage[Y][4 * X + 1] = edge_ind1;
@@ -222,7 +263,7 @@ size_t *edge_lookup(lookup_t *dict, size_t EDGE_Y, size_t EDGE_X) {
     return &(dict->edge_storage[Y][4 * X]);
 }
 
-void vertex_insert(lookup_t *dict, size_t VERTEX_Y, size_t VERTEX_X, size_t tile_num1, size_t vert_ind1, size_t tile_num2, size_t vert_ind2, size_t tile_num3, size_t vert_ind3) {
+void vertex_insert(lookup_t *dict, board_t *board, size_t VERTEX_Y, size_t VERTEX_X, size_t tile_num1, size_t vert_ind1, size_t tile_num2, size_t vert_ind2, size_t tile_num3, size_t vert_ind3) {
     size_t Y, X;
 
     switch (VERTEX_Y) {
@@ -248,6 +289,15 @@ void vertex_insert(lookup_t *dict, size_t VERTEX_Y, size_t VERTEX_X, size_t tile
     }
 
     if (X == -1 || Y == -1) return;
+
+    int ledID = 33 * Y + EDGES_X_NUM * 2 + X;
+    board->tile[tile_num1].vertices[vert_ind1].ledID = ledID;
+    if (tile_num2 != -1) {
+        board->tile[tile_num2].vertices[vert_ind2].ledID = ledID;
+    }
+    if (tile_num3 != -1) {
+        board->tile[tile_num3].vertices[vert_ind3].ledID = ledID;
+    }
 
     dict->vertex_storage[Y][6 * X] = tile_num1;
     dict->vertex_storage[Y][6 * X + 1] = vert_ind1;
@@ -338,6 +388,44 @@ size_t reedsw_lookup(lookup_t *dict, size_t REEDSW_X, size_t REEDSW_Y) {
     return (dict->reedsw_storage[Y][X]);
 }
 
+void edge_slice_init(size_t slice_number) {
+    size_t offset = 3 * slice_number;
+    size_t tile0 = offset;
+    size_t tile1 = offset + 1;
+    size_t tile2 = offset + 2;
+
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X0, tile0, 1, tile1, 4);
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X1, tile1, 1, -1, -1);
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X2, tile1, 0, -1, -1);
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X3, tile2, 1, -1, -1);
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X4, tile2, 0, -1, -1);
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X5, tile2, 5, -1, -1);
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X6, tile2, 4, tile2 + 2, 2);
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X7, tile0, 5, tile2 + 2, 3);
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X8, tile0, 4, tile0, 2);
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X9, tile0, 3, 18, slice_number);
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X10, tile0, 0, tile2, 3);
+    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X11, tile1, 5, tile2, 2);
+}
+
+void vertex_slice_init(size_t slice_number) {
+    size_t offset = 3 * slice_number;
+    size_t tile0 = offset;
+    size_t tile1 = offset + 1;
+    size_t tile2 = offset + 2;
+
+    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X0, tile1, 0, -1, -1, -1, -1);
+    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X1, tile1, 5, tile2, 1, -1, -1);
+    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X2, tile2, 0, -1, -1, -1, -1);
+    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X3, tile2, 5, -1, -1, -1, -1);
+    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X4, tile2, 4, tile2 + 2, 1, -1, -1);
+    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X5, tile2, 3, tile0, 5, tile2 + 2, 2);
+    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X6, tile0, 4, tile2 + 1, 1, tile2 + 2, 3);
+    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X7, tile0, 3, tile2 + 1, 2, 18, slice_number);
+    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X8, tile0, 0, tile1, 4, tile2, 2);
+}
+
+
 // EXAMPLES FOR INSERTING INTO DICT
 // reedsw_insert(dict, REEDSW_Y0, REEDSW_X0, TILE VALUE HERE);
 // reedsw_insert(dict, REEDSW_Y5, REEDSW_X2, TILE VALUE HERE);
@@ -348,144 +436,10 @@ size_t reedsw_lookup(lookup_t *dict, size_t REEDSW_X, size_t REEDSW_Y) {
 // vertex_insert(dict, VERTICES_Y0, VERTICES_X0, TILE VALUE HERE, EDGE INDEX HERE);
 // vertex_insert(dict, VERTICES_Y5, VERTICES_X8, TILE VALUE HERE, EDGE INDEX HERE);
 void initDict(lookup_t *dict) {
-//     edge_insert(dict, EDGES_Y0, EDGES_X0, , );
-//     edge_insert(dict, EDGES_Y0, EDGES_X1, , );
-//     edge_insert(dict, EDGES_Y0, EDGES_X2, , );
-//     edge_insert(dict, EDGES_Y0, EDGES_X3, , );
-//     edge_insert(dict, EDGES_Y0, EDGES_X4, , );
-//     edge_insert(dict, EDGES_Y0, EDGES_X5, , );
-//     edge_insert(dict, EDGES_Y0, EDGES_X6, , );
-//     edge_insert(dict, EDGES_Y0, EDGES_X7, , );
-//     edge_insert(dict, EDGES_Y0, EDGES_X8, , );
-//     edge_insert(dict, EDGES_Y0, EDGES_X9, , );
-//     edge_insert(dict, EDGES_Y0, EDGES_X10, , );
-//     edge_insert(dict, EDGES_Y0, EDGES_X11, , );
-
-//     edge_insert(dict, EDGES_Y1, EDGES_X0, , );
-//     edge_insert(dict, EDGES_Y1, EDGES_X1, , );
-//     edge_insert(dict, EDGES_Y1, EDGES_X2, , );
-//     edge_insert(dict, EDGES_Y1, EDGES_X3, , );
-//     edge_insert(dict, EDGES_Y1, EDGES_X4, , );
-//     edge_insert(dict, EDGES_Y1, EDGES_X5, , );
-//     edge_insert(dict, EDGES_Y1, EDGES_X6, , );
-//     edge_insert(dict, EDGES_Y1, EDGES_X7, , );
-//     edge_insert(dict, EDGES_Y1, EDGES_X8, , );
-//     edge_insert(dict, EDGES_Y1, EDGES_X9, , );
-//     edge_insert(dict, EDGES_Y1, EDGES_X10, , );
-//     edge_insert(dict, EDGES_Y1, EDGES_X11, , );
-
-//     edge_insert(dict, EDGES_Y2, EDGES_X0, , );
-//     edge_insert(dict, EDGES_Y2, EDGES_X1, , );
-//     edge_insert(dict, EDGES_Y2, EDGES_X2, , );
-//     edge_insert(dict, EDGES_Y2, EDGES_X3, , );
-//     edge_insert(dict, EDGES_Y2, EDGES_X4, , );
-//     edge_insert(dict, EDGES_Y2, EDGES_X5, , );
-//     edge_insert(dict, EDGES_Y2, EDGES_X6, , );
-//     edge_insert(dict, EDGES_Y2, EDGES_X7, , );
-//     edge_insert(dict, EDGES_Y2, EDGES_X8, , );
-//     edge_insert(dict, EDGES_Y2, EDGES_X9, , );
-//     edge_insert(dict, EDGES_Y2, EDGES_X10, , );
-//     edge_insert(dict, EDGES_Y2, EDGES_X11, , );
-
-//     edge_insert(dict, EDGES_Y3, EDGES_X0, , );
-//     edge_insert(dict, EDGES_Y3, EDGES_X1, , );
-//     edge_insert(dict, EDGES_Y3, EDGES_X2, , );
-//     edge_insert(dict, EDGES_Y3, EDGES_X3, , );
-//     edge_insert(dict, EDGES_Y3, EDGES_X4, , );
-//     edge_insert(dict, EDGES_Y3, EDGES_X5, , );
-//     edge_insert(dict, EDGES_Y3, EDGES_X6, , );
-//     edge_insert(dict, EDGES_Y3, EDGES_X7, , );
-//     edge_insert(dict, EDGES_Y3, EDGES_X8, , );
-//     edge_insert(dict, EDGES_Y3, EDGES_X9, , );
-//     edge_insert(dict, EDGES_Y3, EDGES_X10, , );
-//     edge_insert(dict, EDGES_Y3, EDGES_X11, , );
-
-//     edge_insert(dict, EDGES_Y4, EDGES_X0, , );
-//     edge_insert(dict, EDGES_Y4, EDGES_X1, , );
-//     edge_insert(dict, EDGES_Y4, EDGES_X2, , );
-//     edge_insert(dict, EDGES_Y4, EDGES_X3, , );
-//     edge_insert(dict, EDGES_Y4, EDGES_X4, , );
-//     edge_insert(dict, EDGES_Y4, EDGES_X5, , );
-//     edge_insert(dict, EDGES_Y4, EDGES_X6, , );
-//     edge_insert(dict, EDGES_Y4, EDGES_X7, , );
-//     edge_insert(dict, EDGES_Y4, EDGES_X8, , );
-//     edge_insert(dict, EDGES_Y4, EDGES_X9, , );
-//     edge_insert(dict, EDGES_Y4, EDGES_X10, , );
-//     edge_insert(dict, EDGES_Y4, EDGES_X11, , );
-
-//     edge_insert(dict, EDGES_Y5, EDGES_X0, , );
-//     edge_insert(dict, EDGES_Y5, EDGES_X1, , );
-//     edge_insert(dict, EDGES_Y5, EDGES_X2, , );
-//     edge_insert(dict, EDGES_Y5, EDGES_X3, , );
-//     edge_insert(dict, EDGES_Y5, EDGES_X4, , );
-//     edge_insert(dict, EDGES_Y5, EDGES_X5, , );
-//     edge_insert(dict, EDGES_Y5, EDGES_X6, , );
-//     edge_insert(dict, EDGES_Y5, EDGES_X7, , );
-//     edge_insert(dict, EDGES_Y5, EDGES_X8, , );
-//     edge_insert(dict, EDGES_Y5, EDGES_X9, , );
-//     edge_insert(dict, EDGES_Y5, EDGES_X10, , );
-//     edge_insert(dict, EDGES_Y5, EDGES_X11, , );
-
-
-//     vertex_insert(dict, VERTICES_Y0, VERTICES_X0, , );
-//     vertex_insert(dict, VERTICES_Y0, VERTICES_X1, , );
-//     vertex_insert(dict, VERTICES_Y0, VERTICES_X2, , );
-//     vertex_insert(dict, VERTICES_Y0, VERTICES_X3, , );
-//     vertex_insert(dict, VERTICES_Y0, VERTICES_X4, , );
-//     vertex_insert(dict, VERTICES_Y0, VERTICES_X5, , );
-//     vertex_insert(dict, VERTICES_Y0, VERTICES_X6, , );
-//     vertex_insert(dict, VERTICES_Y0, VERTICES_X7, , );
-//     vertex_insert(dict, VERTICES_Y0, VERTICES_X8, , );
-
-    // vertex_insert(dict, VERTICES_Y1, VERTICES_X0, , );
-    // vertex_insert(dict, VERTICES_Y1, VERTICES_X1, , );
-    // vertex_insert(dict, VERTICES_Y1, VERTICES_X2, , );
-    // vertex_insert(dict, VERTICES_Y1, VERTICES_X3, , );
-    // vertex_insert(dict, VERTICES_Y1, VERTICES_X4, , );
-    // vertex_insert(dict, VERTICES_Y1, VERTICES_X5, , );
-    // vertex_insert(dict, VERTICES_Y1, VERTICES_X6, , );
-    // vertex_insert(dict, VERTICES_Y1, VERTICES_X7, , );
-    // vertex_insert(dict, VERTICES_Y1, VERTICES_X8, , );
-
-//     vertex_insert(dict, VERTICES_Y2, VERTICES_X0, , );
-//     vertex_insert(dict, VERTICES_Y2, VERTICES_X1, , );
-//     vertex_insert(dict, VERTICES_Y2, VERTICES_X2, , );
-//     vertex_insert(dict, VERTICES_Y2, VERTICES_X3, , );
-//     vertex_insert(dict, VERTICES_Y2, VERTICES_X4, , );
-//     vertex_insert(dict, VERTICES_Y2, VERTICES_X5, , );
-//     vertex_insert(dict, VERTICES_Y2, VERTICES_X6, , );
-//     vertex_insert(dict, VERTICES_Y2, VERTICES_X7, , );
-//     vertex_insert(dict, VERTICES_Y2, VERTICES_X8, , );
-
-//     vertex_insert(dict, VERTICES_Y3, VERTICES_X0, , );
-//     vertex_insert(dict, VERTICES_Y3, VERTICES_X1, , );
-//     vertex_insert(dict, VERTICES_Y3, VERTICES_X2, , );
-//     vertex_insert(dict, VERTICES_Y3, VERTICES_X3, , );
-//     vertex_insert(dict, VERTICES_Y3, VERTICES_X4, , );
-//     vertex_insert(dict, VERTICES_Y3, VERTICES_X5, , );
-//     vertex_insert(dict, VERTICES_Y3, VERTICES_X6, , );
-//     vertex_insert(dict, VERTICES_Y3, VERTICES_X7, , );
-//     vertex_insert(dict, VERTICES_Y3, VERTICES_X8, , );
-
-//     vertex_insert(dict, VERTICES_Y4, VERTICES_X0, , );
-//     vertex_insert(dict, VERTICES_Y4, VERTICES_X1, , );
-//     vertex_insert(dict, VERTICES_Y4, VERTICES_X2, , );
-//     vertex_insert(dict, VERTICES_Y4, VERTICES_X3, , );
-//     vertex_insert(dict, VERTICES_Y4, VERTICES_X4, , );
-//     vertex_insert(dict, VERTICES_Y4, VERTICES_X5, , );
-//     vertex_insert(dict, VERTICES_Y4, VERTICES_X6, , );
-//     vertex_insert(dict, VERTICES_Y4, VERTICES_X7, , );
-//     vertex_insert(dict, VERTICES_Y4, VERTICES_X8, , );
-
-//     vertex_insert(dict, VERTICES_Y5, VERTICES_X0, , );
-//     vertex_insert(dict, VERTICES_Y5, VERTICES_X1, , );
-//     vertex_insert(dict, VERTICES_Y5, VERTICES_X2, , );
-//     vertex_insert(dict, VERTICES_Y5, VERTICES_X3, , );
-//     vertex_insert(dict, VERTICES_Y5, VERTICES_X4, , );
-//     vertex_insert(dict, VERTICES_Y5, VERTICES_X5, , );
-//     vertex_insert(dict, VERTICES_Y5, VERTICES_X6, , );
-//     vertex_insert(dict, VERTICES_Y5, VERTICES_X7, , );
-//     vertex_insert(dict, VERTICES_Y5, VERTICES_X8, , );
+    for (int i = 0; i < 6; i++) {
+        edge_slice_init(i);
+        vertex_slice_init(i);
+    }
 
     reedsw_insert(dict, REEDSW_X0, REEDSW_Y0, 0);
     reedsw_insert(dict, REEDSW_X1, REEDSW_Y0, 1);
@@ -510,4 +464,30 @@ void initDict(lookup_t *dict) {
     reedsw_insert(dict, REEDSW_X0, REEDSW_Y5, 15);
     reedsw_insert(dict, REEDSW_X1, REEDSW_Y5, 16);
     reedsw_insert(dict, REEDSW_X2, REEDSW_Y5, 17);
+
+
+
+    // edge_insert(dict, EDGES_Y1, EDGES_X0, 0 + 3 * slice_number, 1, 1 + 3 * slice_number, 4);
+    // edge_insert(dict, EDGES_Y1, EDGES_X1, 1, 1, -1, -1);
+    // edge_insert(dict, EDGES_Y1, EDGES_X2, 1, 0, -1, -1);
+    // edge_insert(dict, EDGES_Y1, EDGES_X3, 2, 1, -1, -1);
+    // edge_insert(dict, EDGES_Y1, EDGES_X4, 2, 0, -1, -1);
+    // edge_insert(dict, EDGES_Y1, EDGES_X5, 2, 5, -1, -1);
+    // edge_insert(dict, EDGES_Y1, EDGES_X6, 2, 4, 4, 2);
+    // edge_insert(dict, EDGES_Y1, EDGES_X7, 0, 5, 4, 3);
+    // edge_insert(dict, EDGES_Y1, EDGES_X8, 0, 4, 0, 2);
+    // edge_insert(dict, EDGES_Y1, EDGES_X9, 0, 3, 18, slice_number);
+    // edge_insert(dict, EDGES_Y1, EDGES_X10, 0, 0, 2, 3);
+    // edge_insert(dict, EDGES_Y1, EDGES_X11, 1, 5, 2, 2);
+
+
+    // vertex_insert(dict, VERTICES_Y1, VERTICES_X0, 4, 0, -1, -1, -1, -1);
+    // vertex_insert(dict, VERTICES_Y1, VERTICES_X1, 4, 5, 5, 1, -1, -1);
+    // vertex_insert(dict, VERTICES_Y1, VERTICES_X2, 5, 0, -1, -1, -1, -1);
+    // vertex_insert(dict, VERTICES_Y1, VERTICES_X3, 5, 5, -1, -1, -1, -1);
+    // vertex_insert(dict, VERTICES_Y1, VERTICES_X4, 5, 4, 7, 1, -1, -1);
+    // vertex_insert(dict, VERTICES_Y1, VERTICES_X5, 5, 3, 3, 5, 7, 2);
+    // vertex_insert(dict, VERTICES_Y1, VERTICES_X6, 3, 4, 6, 1, 7, 3);
+    // vertex_insert(dict, VERTICES_Y1, VERTICES_X7, 3, 3, 6, 2, 18, slice_number);
+    // vertex_insert(dict, VERTICES_Y1, VERTICES_X8, 3, 0, 4, 4, 5, 2);
 }
