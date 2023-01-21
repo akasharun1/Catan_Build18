@@ -84,14 +84,6 @@ void initPins() {
     pinMode(EDGES_Y5, INPUT_PULLUP);
 }
 
-
-void initRing() {
-
-    Serial.write(PLAYER0);
-    for (int i = 0; i < 20; i++) Serial.write(0);
-}
-
-
 void ringMessage() {
     Serial1.write('s');
 
@@ -129,12 +121,39 @@ board_t *initBoard() {
     int numInd;
     for (int i = 0; i < 19; i++){
         game_board->tiles[i].type = resources[i];
+        for (int j = 0; j < 6; j++) {
+          game_board->tiles[i].vertices[j].type = none;
+          game_board->tiles[i].edges[j].type = none;
+        }
+          
         if (resources[i] == desert) {
             game_board->tiles[i].num =  -1;
         } else {
             game_board->tiles[i].num = nums[numInd];
             numInd++;
         }
+    }
+
+    int resourceInds[6][4];
+    for (int i = 0; i < 11; i++) {
+      resourceInds[i][0] = -1;
+      resourceInds[i][1] = -1;
+      resourceInds[i][2] = -1;
+      resourceInds[i][3] = -1;
+    }
+
+    int numInds[11][2];
+    for (int i = 0; i < 11; i++) {
+      numInds[i][0] = -1;
+      numInds[i][1] = -1;
+    }
+
+    for (int i = 0; i < 19; i++) {
+      if(numInds[game_board->tiles[i].num][0] != -1) {
+        numInds[game_board->tiles[i].num][0] = i;
+      } else {
+        numInds[game_board->tiles[i].num][1] = i;
+      }
     }
 
     return game_board;
@@ -156,27 +175,20 @@ void setup() {
     Serial.begin(9600);
     pixels.begin();
 
-    initDict(dict);
+    board_state = initBoard();
+
+    initDict(dict, board_state);
     initPins();
     //initRing();
-    board_state = initBoard();
+    
     initPlayers();
+    
+    Serial.println("Setup Finished");
+    delay(2000);
+    
+    ringMessage();
 
-    delay(3000);
-
-    //ringMessage();
-
-//    Serial.println("Done Ring msg");
-//
-//    delay(1000);
-//  
-//    int aval = Serial1.available();
-//
-//    for (int i = 0; i < aval; i++) {
-//      Serial.println((Serial1.read()));
-//    }
-
-
+    // Place tiles and numbers function by lighting up leds
 }
 
 int pollReedSwitch() {
@@ -187,7 +199,7 @@ int pollReedSwitch() {
     for (int i = REEDSW_X0; i < REEDSW_X2 + 1; i++) {
         digitalWrite(i, LOW);
         // CHANGED FOR TESTING
-        for(int j = REEDSW_Y0; j < REEDSW_Y1 + 1; j++) {
+        for(int j = REEDSW_Y0; j < REEDSW_Y5 + 1; j++) {
             // We are assigning the tile number based on its location in the reed switch matrix
             if (digitalRead(j) == LOW) {
                 Serial.print(i);
@@ -226,7 +238,16 @@ int *pollEdges() {
                 int edgeRow = (i - EDGES_X0) >> 1;
                 int edgeCol = (j - EDGES_Y0) >> 1;
 
-                return edge_lookup(dict, j, i);
+                int *edges = edge_lookup(dict, j, i);
+                // Serial.print(edges[0]);
+                // Serial.print(", ");
+                // Serial.println(edges[1]);
+
+                // Serial.print(edges[2]);
+                // Serial.print(", ");
+                // Serial.println(edges[3]);
+
+                return edges;
             }
         }
         digitalWrite(i, HIGH);
@@ -332,32 +353,33 @@ int *testVertices() {
 void checkButtonStates() {
   char currRead;
   int iter = 0;
+  char buf[64];
 
-  if (Serial.available() <= 0) {
-    return
+  if (Serial1.available() <= 0) {
+    return;
   } else {
-    currRead = Serial.read();
+    currRead = Serial1.read();
   }
   
   // Message parsing and sending
   while ((currRead != 'e')) {
     buf[iter] = currRead;
     iter++;
-    while (Serial.available() <= 0);
-    currRead = Serial.read();
+    while (Serial1.available() <= 0);
+    currRead = Serial1.read();
   }
   buf[iter] = 'e';
   iter++;
 
-    if (iter != 1) {
-        buf[iter] = '\0';
-    }
+    // if (iter != 1) {
+    //     buf[iter] = '\0';
+    // }
 
     endTurnButtonState = 0x0;
     diceRollReadButtonState = 0x0;
 
 
-    for (int i = 0; i < iter; i+=8) {
+    for (int i = 1; i < iter; i+=8) {
         switch (buf[i]) {
             case (blueController):
                 if (players_move == blueController) {
@@ -382,9 +404,8 @@ void checkButtonStates() {
                     endTurnButtonState = buf[i+6];
                     diceRollReadButtonState = buf[i+7];
                 }
-                break
-            default case:
                 break;
+            default: Serial.println("Unrecognized controller");
         }
     }
 }
@@ -393,7 +414,7 @@ playerOnVertex_t playerOnVertex(building_t type) {
     playerOnVertex_t playerInfo;
     // checking vertices on the tiles
     for (int i = 0; i < 6; i++) {
-        switch(tile.vertices[i].type) {
+        switch(type) {
             case (none): 
                 playerInfo.itemCount = -1;
                 playerInfo.playerIndex = 0; 
@@ -430,7 +451,7 @@ playerOnVertex_t playerOnVertex(building_t type) {
                 playerInfo.itemCount = 2;
                 playerInfo.playerIndex = 3; 
                 break;
-            default case:
+            default:
                 playerInfo.itemCount = -1;
                 playerInfo.playerIndex = 0; 
                 break; 
@@ -441,13 +462,13 @@ playerOnVertex_t playerOnVertex(building_t type) {
 
 void passOutCards (int diceRollTotal) {
     for (int i = 0; i < 19; i++) {
-        if (game_board->tiles[i].num == diceRollTotal) {
-            switch (game_board->tiles[i].type) {
+        if (board_state->tiles[i].num == diceRollTotal) {
+            switch (board_state->tiles[i].type) {
                 case (desert):
                     break;
                 case (rock):
                     for (int j = 0; j < 6; j++) {
-                        playerOnVertex_t playerInfo = playerOnVertex(game_board->tiles[i].vertices[j].type);
+                        playerOnVertex_t playerInfo = playerOnVertex(board_state->tiles[i].vertices[j].type);
                         if (playerInfo.playerIndex != -1) {
                             players[playerInfo.playerIndex].rockCount += playerInfo.itemCount;
                         }
@@ -455,7 +476,7 @@ void passOutCards (int diceRollTotal) {
                     break;
                 case (clay):
                     for (int j = 0; j < 6; j++) {
-                        playerOnVertex_t playerInfo = playerOnVertex(game_board->tiles[i].vertices[j].type);
+                        playerOnVertex_t playerInfo = playerOnVertex(board_state->tiles[i].vertices[j].type);
                         if (playerInfo.playerIndex != -1) {
                             players[playerInfo.playerIndex].clayCount += playerInfo.itemCount;
                         }
@@ -463,7 +484,7 @@ void passOutCards (int diceRollTotal) {
                     break;
                 case (wood):
                     for (int j = 0; j < 6; j++) {
-                        playerOnVertex_t playerInfo = playerOnVertex(game_board->tiles[i].vertices[j].type);
+                        playerOnVertex_t playerInfo = playerOnVertex(board_state->tiles[i].vertices[j].type);
                         if (playerInfo.playerIndex != -1) {
                             players[playerInfo.playerIndex].woodCount += playerInfo.itemCount;
                         }
@@ -471,19 +492,17 @@ void passOutCards (int diceRollTotal) {
                     break;
                 case (wheat):
                     for (int j = 0; j < 6; j++) {
-                        playerOnVertex_t playerInfo = playerOnVertex(game_board->tiles[i].vertices[j].type);
+                        playerOnVertex_t playerInfo = playerOnVertex(board_state->tiles[i].vertices[j].type);
                         players[playerInfo.playerIndex].wheatCount += playerInfo.itemCount;
                     }
                     break;
                 case (sheep):
                     for (int j = 0; j < 6; j++) {
-                        playerOnVertex_t playerInfo = playerOnVertex(game_board->tiles[i].vertices[j].type);
+                        playerOnVertex_t playerInfo = playerOnVertex(board_state->tiles[i].vertices[j].type);
                         if (playerInfo.playerIndex != -1) {
                             players[playerInfo.playerIndex].sheepCount += playerInfo.itemCount;
                         }
                     }
-                    break;
-                default case:
                     break;
             }
         }
@@ -493,20 +512,59 @@ void passOutCards (int diceRollTotal) {
 bool edgeOrVertexPressed = false;
 bool prevEdgeOrVertexPressed = false;
 bool readDice = false;
-bool prevDiceButtonState = false;
+bool prevDiceRollButtonState = false;
     
 void loop() {
+    // while(1) {
+    //   pixels.clear();
+    //   for (int i = 0; i < NUMPIXELS; i++) {
+    //     pixels.setBrightness(255);
+    //     pixels.setPixelColor(i, pixels.Color(0, 150, 0));
+    //     delay(10);
+    //     pixels.show();
+    //   }
+    // }
+    int val;
+    int *res;
+    // if((val = pollReedSwitch()) != 18) {
+    //     Serial.print("Robber value is ");
+    //     Serial.println(val);
+    // }
+    // if((res = testEdges()) != NULL) {
+    //     Serial.print("EDGEX, EDGEY: ");
+    //     Serial.print(res[0]);
+    //     Serial.print(", ");
+    //     Serial.println(res[1]);
+
+    //     free(res);
+    //     res = NULL;
+    // }
+    // if((res = testVertices()) != NULL) {
+    //     Serial.print("VERTX, VERTY: ");
+    //     Serial.print(res[0]);
+    //     Serial.print(", ");
+    //     Serial.println(res[1]);
+
+    //     free(res);
+    //     res = NULL;
+    // }
+    
+    checkButtonStates();
     // Recieve data from dice
     if (diceRollReadButtonState != prevDiceRollButtonState) {
         if (diceRollReadButtonState == true) {
             readDice = true;
         }
     }
-    prevDiceRollButtonState = diceRollButtonState;
+    prevDiceRollButtonState = diceRollReadButtonState;
 
-    if (Serial2.available() > 0 & readDice) {
-        int diceRollTotal = Serial2.read();
-        
+    int diceAval;
+    int diceRollTotal;
+    if ((diceAval = Serial2.available()) > 0) {
+      for (int i = 0; i < diceAval; i++) {
+          diceRollTotal = Serial2.read();
+      }
+      if(readDice) {
         // Set the player resource variables in this function
         // NEED TO CALL pollReedSwitch to check where robber is in here
         passOutCards(diceRollTotal);
@@ -514,63 +572,80 @@ void loop() {
         // Send the message with the cards
         ringMessage();
         readDice = false;
+      }
     }
 
-    // Set vertexState when an vertex is pressed
-    if (edgeOrVertexPressedState != prevEdgeOrVertexState) {
-        if (edgeOrVertexPressedState == true) {
-            edgeOrVertexPressed = true;
-        }
-    }
-    prevEdgeOrVertexPressed = edgeOrVertexPressedState;
+    
     
     if (endTurnButtonState) {
-        endTurnButtonState = 0x0;
-        players_move = (players_move == orangeController) ? blueController : players_move + 1;
+      // Add reverse turn order here
+      endTurnButtonState = 0x0;
+      players_move = (players_move == orangeController) ? blueController : players_move + 1;
     }
 
     int *activeEdge = pollEdges();
     int *activeVertex = pollVertices();
 
-    // Account for edges on one tile ********
+    edgeOrVertexPressedState = activeEdge != NULL || activeVertex != NULL;
+
+    // Set vertexState when an vertex is pressed
+    if (edgeOrVertexPressedState != prevEdgeOrVertexPressed) {
+      
+        if (edgeOrVertexPressedState == true) {
+            edgeOrVertexPressed = true;
+        }
+    }
+    prevEdgeOrVertexPressed = edgeOrVertexPressedState;
+
     // update Edges based on active pressed
-    if (activeEdge != NULL & edgeOrVertexPressed) {
+    if (activeEdge != NULL && edgeOrVertexPressed) {
         // Tile1, Edge1, Tile2, Edge2    
-        if (activeVertex[0] != -1) {
+        if (activeEdge[0] != -1) {
             building_t roadType1 = board_state->tiles[activeEdge[0]].edges[activeEdge[1]].type;
             board_state->tiles[activeEdge[0]].edges[activeEdge[1]].type = updateRoadColor(roadType1);
         }
         
-        if (activeVertex[2] != -1) {
+        if (activeEdge[2] != -1) {
             building_t roadType2 = board_state->tiles[activeEdge[2]].edges[activeEdge[3]].type;
-            board_state->tiles[activeVertex[2]].edges[activeEdge[3]].type = updateRoadColor(roadType2);
+            board_state->tiles[activeEdge[2]].edges[activeEdge[3]].type = updateRoadColor(roadType2);
         }
+         edgeOrVertexPressed = false;
     }
 
     // update Vertices based on active pressed
-    else if (activeVertex != NULL & edgeOrVertexPressed) {
+    else if (activeVertex != NULL && edgeOrVertexPressed) {
         // [Tile1, Vert1, Tile2, Vert2, Tile3, Vert3]
         // Need to figure out which tiles have active vertexes and update all of them
-        if (activeVertex[0] != -1) {
+        // for (int i = 0; i < 6; i++) {
+        //   Serial.println(activeVertex[i]);
+        // }
+        if (activeVertex[0] != -1) {          
             building_t buildingType1 = board_state->tiles[activeVertex[0]].vertices[activeVertex[1]].type;
             board_state->tiles[activeVertex[0]].vertices[activeVertex[1]].type = updateBuildingType(buildingType1);
+            // Serial.println(buildingType1);
+            // Serial.println(updateBuildingType(buildingType1));
+
         }
-        
         if (activeVertex[2] != -1) {
             building_t buildingType2 = board_state->tiles[activeVertex[2]].vertices[activeVertex[3]].type;
             board_state->tiles[activeVertex[2]].vertices[activeVertex[3]].type = updateBuildingType(buildingType2);
+            // Serial.println(buildingType2);
+            // Serial.println(updateBuildingType(buildingType2));
         }
         if (activeVertex[4] != -1) {
             building_t buildingType3 = board_state->tiles[activeVertex[4]].vertices[activeVertex[5]].type;
             board_state->tiles[activeVertex[4]].vertices[activeVertex[5]].type = updateBuildingType(buildingType3);
+            // Serial.println(buildingType3);
+            // Serial.println(updateBuildingType(buildingType3));
         }
+         edgeOrVertexPressed = false;
     }
-    edgeOrVertexPressed = false;
+   
     
     updatePixelColors();
     
-    // TESTING CODE BELOW HERE, DONT MODIFY
-    continue;    
+    // // TESTING CODE BELOW HERE, DONT MODIFY
+    return;    
     while(1) {
       pixels.clear();
       for (int i = 0; i < NUMPIXELS; i++) {
@@ -581,8 +656,8 @@ void loop() {
       }
     }
 
-    int val;
-    int *res;
+    //int val;
+    //int *res;
     while(1) {
         if((val = pollReedSwitch()) != 18) {
             Serial.print("Robber value is ");
@@ -627,12 +702,12 @@ building_t updateBuildingType(building_t buildingType) {
                 return green_settlement;
             case (orangeController):
                 return orange_settlement;
-            default case:
+            default:
                 return none;
         }
     }
-    else if (buildingType == blue_settlement | buildingType == green_settlement 
-            buildingType == red_settlement | buildingType == orange_settlement) {
+    else if (buildingType == blue_settlement || buildingType == green_settlement ||
+            buildingType == red_settlement || buildingType == orange_settlement) {
         switch(players_move) {
             case (blueController): 
                 return blue_city;
@@ -642,7 +717,7 @@ building_t updateBuildingType(building_t buildingType) {
                 return green_city;
             case (orangeController):
                 return orange_city;
-            default case:
+            default:
                 return none;
         }
     }
@@ -662,7 +737,7 @@ building_t updateRoadColor(building_t buildingType) {
                 return green_settlement;
             case (orangeController):
                 return orange_settlement;
-            default case:
+            default:
                 return none;
         }
     }
@@ -672,59 +747,70 @@ building_t updateRoadColor(building_t buildingType) {
 }
 
 void updatePixelColors() {
+  pixels.clear();
+  pixels.setBrightness(255);  
     for (int i = 0; i < 19; i++) {
         // for edges
         for (int j = 0; j < 6; j ++) {
-            edge_t edge = game_board->tiles[i].edges[j];
+            edge_t edge = board_state->tiles[i].edges[j];
+
             switch (edge.type) {
                 case (none):
+                    //Serial.println("NONE");
                     pixels.setPixelColor(edge.ledID1, pixels.Color(0, 0, 0));
                     pixels.setPixelColor(edge.ledID2, pixels.Color(0, 0, 0));
                     break;
-                case (blue_settlement | blue_city):
+                case (blue_settlement):
+                case (blue_city):
+                    //Serial.println(j);
                     pixels.setPixelColor(edge.ledID1, pixels.Color(0, 0, 150));
                     pixels.setPixelColor(edge.ledID2, pixels.Color(0, 0, 150));
                     break;
-                case (green_settlement | green_city):
+                case (green_settlement):
+                case (green_city):
                     pixels.setPixelColor(edge.ledID1, pixels.Color(0, 150, 0));
                     pixels.setPixelColor(edge.ledID2, pixels.Color(0, 150, 0));
                     break;
-                case (red_settlement | red_city):
+                case (red_settlement):
+                case (red_city):
                     pixels.setPixelColor(edge.ledID1, pixels.Color(150, 0, 0));
                     pixels.setPixelColor(edge.ledID2, pixels.Color(150, 0, 0));
                     break;
-                case (orange_settlement | orange_city):
+                case (orange_settlement):
+                case (orange_city):
                     pixels.setPixelColor(edge.ledID1, pixels.Color(150, 75, 0));
                     pixels.setPixelColor(edge.ledID2, pixels.Color(150, 75, 0));
                     break;
-                default case:
-                    break;
+                default: Serial.println("Building type unrecognized");
             }
         }
         for (int k = 0; k < 6; k++) {
-            vertex_t vertex = game_board->tiles[i].vertices[k];
-            switch (game_board->tiles[i].vertices[k].type) {
-                switch (vertex.type) {
-                    case (none):
-                        pixels.setPixelColor(vertex.ledID, pixels.Color(0, 0, 0));
-                        break;
-                    case (blue_settlement | blue_city):
-                        pixels.setPixelColor(vertex.ledID, pixels.Color(0, 0, 150));
-                        break;
-                    case (green_settlement | green_city):
-                        pixels.setPixelColor(vertex.ledID, pixels.Color(0, 150, 0));
-                        break;
-                    case (red_settlement | red_city):
-                        pixels.setPixelColor(vertex.ledID, pixels.Color(150, 0, 0));
-                        break;
-                    case (orange_settlement | orange_city):
-                        pixels.setPixelColor(vertex.ledID, pixels.Color(150, 75, 0));
-                        break;
-                    default case:
-                        break;
-                }   
-            }
+            vertex_t vertex = board_state->tiles[i].vertices[k];
+            switch (vertex.type) {
+                case (none):
+                    pixels.setPixelColor(vertex.ledID, pixels.Color(0, 0, 0));
+                    break;
+                case (blue_settlement):
+                case (blue_city):
+                    Serial.println(vertex.ledID);
+                    pixels.setPixelColor(vertex.ledID, pixels.Color(0, 0, 150));
+                    break;
+                case (green_settlement):
+                case (green_city):
+                    pixels.setPixelColor(vertex.ledID, pixels.Color(0, 150, 0));
+                    break;
+                case (red_settlement):
+                case (red_city):
+                    pixels.setPixelColor(vertex.ledID, pixels.Color(150, 0, 0));
+                    break;
+                case (orange_settlement):
+                case (orange_city):
+                    pixels.setPixelColor(vertex.ledID, pixels.Color(150, 75, 0));
+                    break;
+            }   
+            
         }
     }
+  pixels.show();
 }
 

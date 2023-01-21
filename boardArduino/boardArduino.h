@@ -145,7 +145,7 @@ struct board_t {
 struct playerOnVertex_t {
     int itemCount;
     int playerIndex;
-}
+};
 
 struct lookup_t {
     // Multiplied by two so that lookup will give tile number and index in respective array
@@ -156,7 +156,7 @@ struct lookup_t {
     size_t reedsw_storage[RDSW_Y_NUM][RDSW_X_NUM];
 };
 
-void edge_insert(lookup_t *dict, size_t EDGE_Y, size_t EDGE_X, size_t tile_num1, size_t edge_ind1, size_t tile_num2, size_t edge_ind2) {
+void edge_insert(lookup_t *dict, board_t *board, size_t EDGE_Y, size_t EDGE_X, size_t tile_num1, size_t edge_ind1, size_t tile_num2, size_t edge_ind2) {
     size_t Y, X;
 
     switch (EDGE_Y) {
@@ -212,15 +212,11 @@ void edge_insert(lookup_t *dict, size_t EDGE_Y, size_t EDGE_X, size_t tile_num1,
         default: Serial.println("LED NOT RECOGNIZED");
     }
 
-    board->tile[tile_num1].edges[vert_ind1].ledID1 = ledID1;
-    board->tile[tile_num1].edges[vert_ind1].ledID2 = ledID2;
+    board->tiles[tile_num1].edges[edge_ind1].ledID1 = ledID1;
+    board->tiles[tile_num1].edges[edge_ind1].ledID2 = ledID2;
     if (tile_num2 != -1) {
-        board->tile[tile_num2].edges[vert_ind2].ledID1 = ledID1;
-        board->tile[tile_num2].edges[vert_ind2].ledID2 = ledID2;
-    }
-    if (tile_num3 != -1) {
-        board->tile[tile_num3].edges[vert_ind3].ledID1 = ledID1;
-        board->tile[tile_num3].edges[vert_ind3].ledID2 = ledID2;
+        board->tiles[tile_num2].edges[edge_ind2].ledID1 = ledID1;
+        board->tiles[tile_num2].edges[edge_ind2].ledID2 = ledID2;
     }
 
     dict->edge_storage[Y][4 * X] = tile_num1;
@@ -291,12 +287,12 @@ void vertex_insert(lookup_t *dict, board_t *board, size_t VERTEX_Y, size_t VERTE
     if (X == -1 || Y == -1) return;
 
     int ledID = 33 * Y + EDGES_X_NUM * 2 + X;
-    board->tile[tile_num1].vertices[vert_ind1].ledID = ledID;
+    board->tiles[tile_num1].vertices[vert_ind1].ledID = ledID;
     if (tile_num2 != -1) {
-        board->tile[tile_num2].vertices[vert_ind2].ledID = ledID;
+        board->tiles[tile_num2].vertices[vert_ind2].ledID = ledID;
     }
     if (tile_num3 != -1) {
-        board->tile[tile_num3].vertices[vert_ind3].ledID = ledID;
+        board->tiles[tile_num3].vertices[vert_ind3].ledID = ledID;
     }
 
     dict->vertex_storage[Y][6 * X] = tile_num1;
@@ -388,41 +384,41 @@ size_t reedsw_lookup(lookup_t *dict, size_t REEDSW_X, size_t REEDSW_Y) {
     return (dict->reedsw_storage[Y][X]);
 }
 
-void edge_slice_init(size_t slice_number) {
+void edge_slice_init(size_t slice_number, lookup_t *dict, board_t *board) {
     size_t offset = 3 * slice_number;
     size_t tile0 = offset;
     size_t tile1 = offset + 1;
     size_t tile2 = offset + 2;
 
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X0, tile0, 1, tile1, 4);
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X1, tile1, 1, -1, -1);
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X2, tile1, 0, -1, -1);
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X3, tile2, 1, -1, -1);
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X4, tile2, 0, -1, -1);
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X5, tile2, 5, -1, -1);
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X6, tile2, 4, tile2 + 2, 2);
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X7, tile0, 5, tile2 + 2, 3);
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X8, tile0, 4, tile0, 2);
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X9, tile0, 3, 18, slice_number);
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X10, tile0, 0, tile2, 3);
-    edge_insert(dict, EDGES_Y0 + slice_number, EDGES_X11, tile1, 5, tile2, 2);
+    edge_insert(dict, board, EDGES_Y0 + 2 * slice_number, EDGES_X0, tile0, 1, tile1, 4);
+    edge_insert(dict, board,EDGES_Y0 + 2 * slice_number, EDGES_X1, tile1, 1, -1, -1);
+    edge_insert(dict, board,EDGES_Y0 + 2 * slice_number, EDGES_X2, tile1, 0, -1, -1);
+    edge_insert(dict, board,EDGES_Y0 + 2 * slice_number, EDGES_X3, tile2, 1, -1, -1);
+    edge_insert(dict, board,EDGES_Y0 + 2 * slice_number, EDGES_X4, tile2, 0, -1, -1);
+    edge_insert(dict, board,EDGES_Y0 + 2 * slice_number, EDGES_X5, tile2, 5, -1, -1);
+    edge_insert(dict, board,EDGES_Y0 + 2 * slice_number, EDGES_X6, tile2, 4, (tile2 + 2) % 18, 2);
+    edge_insert(dict, board,EDGES_Y0 + 2 * slice_number, EDGES_X7, tile0, 5, (tile2 + 2) % 18, 3);
+    edge_insert(dict, board,EDGES_Y0 + 2 * slice_number, EDGES_X8, tile0, 4, (tile0 + 3) % 18, 2);
+    edge_insert(dict, board,EDGES_Y0 + 2 * slice_number, EDGES_X9, tile0, 3, 18, slice_number);
+    edge_insert(dict, board,EDGES_Y0 + 2 * slice_number, EDGES_X10, tile1, 5, tile2, 2);
+    edge_insert(dict, board,EDGES_Y0 + 2 * slice_number, EDGES_X11, tile0, 0, tile2, 3);
 }
 
-void vertex_slice_init(size_t slice_number) {
+void vertex_slice_init(size_t slice_number, lookup_t *dict, board_t *board) {
     size_t offset = 3 * slice_number;
     size_t tile0 = offset;
     size_t tile1 = offset + 1;
     size_t tile2 = offset + 2;
 
-    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X0, tile1, 0, -1, -1, -1, -1);
-    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X1, tile1, 5, tile2, 1, -1, -1);
-    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X2, tile2, 0, -1, -1, -1, -1);
-    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X3, tile2, 5, -1, -1, -1, -1);
-    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X4, tile2, 4, tile2 + 2, 1, -1, -1);
-    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X5, tile2, 3, tile0, 5, tile2 + 2, 2);
-    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X6, tile0, 4, tile2 + 1, 1, tile2 + 2, 3);
-    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X7, tile0, 3, tile2 + 1, 2, 18, slice_number);
-    vertex_insert(dict, VERTICES_Y0 + slice_number, VERTICES_X8, tile0, 0, tile1, 4, tile2, 2);
+    vertex_insert(dict, board, VERTICES_Y0 + slice_number, VERTICES_X0, tile1, 0, -1, -1, -1, -1);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X1, tile1, 5, tile2, 1, -1, -1);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X2, tile2, 0, -1, -1, -1, -1);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X3, tile2, 5, -1, -1, -1, -1);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X4, tile2, 4, tile2 + 2, 1, -1, -1);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X5, tile2, 3, tile0, 5, tile2 + 2, 2);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X6, tile0, 4, tile2 + 1, 1, tile2 + 2, 3);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X7, tile0, 3, tile2 + 1, 2, 18, slice_number);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X8, tile0, 0, tile1, 4, tile2, 2);
 }
 
 
@@ -435,10 +431,10 @@ void vertex_slice_init(size_t slice_number) {
 
 // vertex_insert(dict, VERTICES_Y0, VERTICES_X0, TILE VALUE HERE, EDGE INDEX HERE);
 // vertex_insert(dict, VERTICES_Y5, VERTICES_X8, TILE VALUE HERE, EDGE INDEX HERE);
-void initDict(lookup_t *dict) {
+void initDict(lookup_t *dict, board_t *board) {
     for (int i = 0; i < 6; i++) {
-        edge_slice_init(i);
-        vertex_slice_init(i);
+        edge_slice_init(i, dict, board);
+        vertex_slice_init(i, dict, board);
     }
 
     reedsw_insert(dict, REEDSW_X0, REEDSW_Y0, 0);
