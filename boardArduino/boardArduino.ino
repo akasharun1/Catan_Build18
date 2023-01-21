@@ -23,8 +23,9 @@ void shuffle(int *array, size_t n)
 {
     if (n > 1)
     {
-        size_t i;
-        for (i = 0; i < n - 1; i++)
+      size_t shuffles = rand();
+      for (size_t j = 0; j < shuffles; j++)
+        for (size_t i = 0; i < n - 1; i++)
         {
           size_t j = i + rand() / (RAND_MAX / (n - i) + 1);
           int t = array[j];
@@ -115,10 +116,15 @@ board_t *initBoard() {
     shuffle((int *) resources, 19);
     shuffle(nums, 18);
 
+    // for (int i = 0; i < 18; i++) {
+    //   Serial.print(nums[i]);
+    //   Serial.print(" ");
+    // }
+
 
     board_t *game_board = (board_t *) malloc(sizeof(board_t));
 
-    int numInd;
+    int numInd = 0;
     for (int i = 0; i < 19; i++){
         game_board->tiles[i].type = resources[i];
         for (int j = 0; j < 6; j++) {
@@ -127,12 +133,23 @@ board_t *initBoard() {
         }
           
         if (resources[i] == desert) {
+          Serial.println();
             game_board->tiles[i].num =  -1;
         } else {
             game_board->tiles[i].num = nums[numInd];
             numInd++;
         }
     }
+
+    // Serial.println();
+    // //     for (int i = 0; i < 18; i++) {
+    // //   Serial.print(nums[i]);
+    // //   Serial.print(" ");
+    // // }
+    // for (int i = 0; i < 18; i++) {
+    //   Serial.print( game_board->tiles[i].num);
+    //   Serial.print(" ");
+    // }
 
     return game_board;
 }
@@ -153,7 +170,7 @@ void lightHex(int tile_num, int resource_num) {
     edge_t edge = board_state->tiles[tile_num].edges[i];
     vertex_t vertex = board_state->tiles[tile_num].vertices[i];
 
-    Serial.println(vertex.ledID);
+    // Serial.println(vertex.ledID);
 
     pixels.setPixelColor(vertex.ledID, pixels.Color(color[0], color[1], color[2]));
     pixels.setPixelColor(edge.ledID1, pixels.Color(color[0], color[1], color[2]));
@@ -165,73 +182,74 @@ void layTilesAndNums() {
   pixels.clear();
   pixels.setBrightness(255);
 
-    int resourceInds[6][4];
-    for (int i = 0; i < 6; i++) {
-      resourceInds[i][0] = -1;
-      resourceInds[i][1] = -1;
-      resourceInds[i][2] = -1;
-      resourceInds[i][3] = -1;
-    }
+  // // Lay resources
+  //   int resourceInds[6][4];
+  //   for (int i = 0; i < 6; i++) {
+  //     resourceInds[i][0] = -1;
+  //     resourceInds[i][1] = -1;
+  //     resourceInds[i][2] = -1;
+  //     resourceInds[i][3] = -1;
+  //   }
 
-    for (int i = 0; i < 19; i++) {
-      if(resourceInds[board_state->tiles[i].type][0] == -1) {
-        resourceInds[board_state->tiles[i].type][0] = i;
-      } else if(resourceInds[board_state->tiles[i].type][1] == -1) {
-        resourceInds[board_state->tiles[i].type][1] = i;
-      } else if(resourceInds[board_state->tiles[i].type][2] == -1) {
-        resourceInds[board_state->tiles[i].type][2] = i;
-      } else {
-        resourceInds[board_state->tiles[i].type][3] = i;
-      }
-    }
+  //   for (int i = 0; i < 19; i++) {
+  //     if(resourceInds[board_state->tiles[i].type][0] == -1) {
+  //       resourceInds[board_state->tiles[i].type][0] = i;
+  //     } else if(resourceInds[board_state->tiles[i].type][1] == -1) {
+  //       resourceInds[board_state->tiles[i].type][1] = i;
+  //     } else if(resourceInds[board_state->tiles[i].type][2] == -1) {
+  //       resourceInds[board_state->tiles[i].type][2] = i;
+  //     } else {
+  //       resourceInds[board_state->tiles[i].type][3] = i;
+  //     }
+  //   }
 
-    int flash_time = 250;
-    for (int resource_num = desert; resource_num < 6; resource_num++) {
-      for (int iter = 0; iter < 5; iter++) {
-        pixels.clear();
-        switch (resource_num) {
-          case wheat:
-          case wood:
-          case sheep: {
-            lightHex(resourceInds[resource_num][3], resource_num);         
-          }
-          case rock:
-          case clay: {
-            lightHex(resourceInds[resource_num][1], resource_num);
-            lightHex(resourceInds[resource_num][2], resource_num);
-            }
-          case desert: {
-            lightHex(resourceInds[resource_num][0], resource_num);
-          }
-        }
-        pixels.show();
-        delay(flash_time);
+     int flash_time = 250;
+  //   for (int resource_num = desert; resource_num < 6; resource_num++) {
+  //     for (int iter = 0; iter < 5; iter++) {
+  //       pixels.clear();
+  //       switch (resource_num) {
+  //         case wheat:
+  //         case wood:
+  //         case sheep: {
+  //           lightHex(resourceInds[resource_num][3], resource_num);         
+  //         }
+  //         case rock:
+  //         case clay: {
+  //           lightHex(resourceInds[resource_num][1], resource_num);
+  //           lightHex(resourceInds[resource_num][2], resource_num);
+  //           }
+  //         case desert: {
+  //           lightHex(resourceInds[resource_num][0], resource_num);
+  //         }
+  //       }
+  //       pixels.show();
+  //       delay(flash_time);
         
 
-        pixels.clear();
-        switch (resource_num) {
-          case wheat:
-          case wood:
-          case sheep: {
-            lightHex(resourceInds[resource_num][3], -1);
-          }
-          case rock:
-          case clay: {
-            lightHex(resourceInds[resource_num][1], -1);
-            lightHex(resourceInds[resource_num][2], -1);
-            }
-          case desert: {
-            lightHex(resourceInds[resource_num][0], -1);
-          }
-        }
-        pixels.show();
-        delay(flash_time);
-      }
-      delay(10 * flash_time);
-    }
+  //       pixels.clear();
+  //       switch (resource_num) {
+  //         case wheat:
+  //         case wood:
+  //         case sheep: {
+  //           lightHex(resourceInds[resource_num][3], -1);
+  //         }
+  //         case rock:
+  //         case clay: {
+  //           lightHex(resourceInds[resource_num][1], -1);
+  //           lightHex(resourceInds[resource_num][2], -1);
+  //           }
+  //         case desert: {
+  //           lightHex(resourceInds[resource_num][0], -1);
+  //         }
+  //       }
+  //       pixels.show();
+  //       delay(flash_time);
+  //     }
+  //     delay(10 * flash_time);
+  //   }
 
 
-
+    // Lay numbers
     int numInds[11][2];
     for (int i = 0; i < 11; i++) {
       numInds[i][0] = -1;
@@ -239,14 +257,23 @@ void layTilesAndNums() {
     }
 
     for (int i = 0; i < 19; i++) {
-      if(numInds[board_state->tiles[i].num - 2][0] == -1) {
+      Serial.print(board_state->tiles[i].num);
+      if (board_state->tiles[i].type == desert) continue;
+      if (numInds[board_state->tiles[i].num - 2][0] == -1) {
         numInds[board_state->tiles[i].num - 2][0] = i;
       } else {
         numInds[board_state->tiles[i].num - 2][1] = i;
       }
     }
 
+    // for (int i = 0; i < 11; i++) {
+    //   Serial.print(numInds[i][0]);
+    //   Serial.print(", ");
+    //   Serial.println(numInds[i][1]);
+    // }
+
     for (int i = 0; i < 11; i++) {
+      if (i == 5) continue;
       for (int iter = 0; iter < i + 2; iter++) {
         pixels.clear();
         switch(i) {
@@ -314,6 +341,7 @@ void setup() {
     Serial1.begin(9600);
     Serial.begin(9600);
     pixels.begin();
+    srand(time(NULL));
 
 
     board_state = initBoard();
@@ -322,7 +350,7 @@ void setup() {
     initPins();
 
     //testTiles();
-    //layTilesAndNums();
+    layTilesAndNums();
     
     initPlayers();
     
