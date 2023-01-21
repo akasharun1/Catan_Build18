@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <stdlib.h>
 #include <Adafruit_NeoPixel.h>
+#include <time.h>
 
 #define NEOPIN 22
 #define NUMPIXELS 6 * 33
