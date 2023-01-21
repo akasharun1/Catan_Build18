@@ -414,10 +414,10 @@ void vertex_slice_init(size_t slice_number, lookup_t *dict, board_t *board) {
     vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X1, tile1, 5, tile2, 1, -1, -1);
     vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X2, tile2, 0, -1, -1, -1, -1);
     vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X3, tile2, 5, -1, -1, -1, -1);
-    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X4, tile2, 4, tile2 + 2, 1, -1, -1);
-    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X5, tile2, 3, tile0, 5, tile2 + 2, 2);
-    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X6, tile0, 4, tile2 + 1, 1, tile2 + 2, 3);
-    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X7, tile0, 3, tile2 + 1, 2, 18, slice_number);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X4, tile2, 4, (tile2 + 2) % 18, 1, -1, -1);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X5, tile2, 3, tile0, 5, (tile2 + 2) % 18, 2);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X6, tile0, 4, (tile2 + 1) % 18, 1, (tile2 + 2) % 18, 3);
+    vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X7, tile0, 3, (tile2 + 1) % 18, 2, 18, slice_number);
     vertex_insert(dict, board,VERTICES_Y0 + slice_number, VERTICES_X8, tile0, 0, tile1, 4, tile2, 2);
 }
 

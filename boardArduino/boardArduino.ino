@@ -134,13 +134,103 @@ board_t *initBoard() {
         }
     }
 
+    return game_board;
+}
+
+void lightHex(int tile_num, int resource_num) {
+  int color[3];
+  switch(resource_num) {
+    case desert: color[0] = 255; color[1] = 255; color[2] = 255; break;
+    case wheat: color[0] = 255; color[1] = 255; color[2] = 0; break;
+    case sheep: color[0] = 0x90; color[1] = 0xee; color[2] = 0x90; break;
+    case wood: color[0] = 0; color[1] = 255; color[2] = 0; break; 
+    case clay: color[0] = 255; color[1] = 165; color[2] = 0; break;
+    case rock: color[0] = 128; color[1] = 128; color[2] = 128; break; 
+    case -1: color[0] = 0; color[1] = 0; color[2] = 0; break;
+  }
+
+  for (int i = 0; i < 6; i++) {
+    edge_t edge = board_state->tiles[tile_num].edges[i];
+    vertex_t vertex = board_state->tiles[tile_num].vertices[i];
+
+    Serial.println(vertex.ledID);
+
+    pixels.setPixelColor(vertex.ledID, pixels.Color(color[0], color[1], color[2]));
+    pixels.setPixelColor(edge.ledID1, pixels.Color(color[0], color[1], color[2]));
+    pixels.setPixelColor(edge.ledID2, pixels.Color(color[0], color[1], color[2]));
+  }
+}
+
+void layTilesAndNums() {
+  pixels.clear();
+  pixels.setBrightness(255);
+
     int resourceInds[6][4];
-    for (int i = 0; i < 11; i++) {
+    for (int i = 0; i < 6; i++) {
       resourceInds[i][0] = -1;
       resourceInds[i][1] = -1;
       resourceInds[i][2] = -1;
       resourceInds[i][3] = -1;
     }
+
+    for (int i = 0; i < 19; i++) {
+      if(resourceInds[board_state->tiles[i].type][0] == -1) {
+        resourceInds[board_state->tiles[i].type][0] = i;
+      } else if(resourceInds[board_state->tiles[i].type][1] == -1) {
+        resourceInds[board_state->tiles[i].type][1] = i;
+      } else if(resourceInds[board_state->tiles[i].type][2] == -1) {
+        resourceInds[board_state->tiles[i].type][2] = i;
+      } else {
+        resourceInds[board_state->tiles[i].type][3] = i;
+      }
+    }
+
+    int flash_time = 250;
+    for (int resource_num = desert; resource_num < 6; resource_num++) {
+      for (int iter = 0; iter < 5; iter++) {
+        pixels.clear();
+        switch (resource_num) {
+          case wheat:
+          case wood:
+          case sheep: {
+            lightHex(resourceInds[resource_num][3], resource_num);         
+          }
+          case rock:
+          case clay: {
+            lightHex(resourceInds[resource_num][1], resource_num);
+            lightHex(resourceInds[resource_num][2], resource_num);
+            }
+          case desert: {
+            lightHex(resourceInds[resource_num][0], resource_num);
+          }
+        }
+        pixels.show();
+        delay(flash_time);
+        
+
+        pixels.clear();
+        switch (resource_num) {
+          case wheat:
+          case wood:
+          case sheep: {
+            lightHex(resourceInds[resource_num][3], -1);
+          }
+          case rock:
+          case clay: {
+            lightHex(resourceInds[resource_num][1], -1);
+            lightHex(resourceInds[resource_num][2], -1);
+            }
+          case desert: {
+            lightHex(resourceInds[resource_num][0], -1);
+          }
+        }
+        pixels.show();
+        delay(flash_time);
+      }
+      delay(10 * flash_time);
+    }
+
+
 
     int numInds[11][2];
     for (int i = 0; i < 11; i++) {
@@ -149,14 +239,64 @@ board_t *initBoard() {
     }
 
     for (int i = 0; i < 19; i++) {
-      if(numInds[game_board->tiles[i].num][0] != -1) {
-        numInds[game_board->tiles[i].num][0] = i;
+      if(numInds[board_state->tiles[i].num - 2][0] == -1) {
+        numInds[board_state->tiles[i].num - 2][0] = i;
       } else {
-        numInds[game_board->tiles[i].num][1] = i;
+        numInds[board_state->tiles[i].num - 2][1] = i;
       }
     }
 
-    return game_board;
+    for (int i = 0; i < 11; i++) {
+      for (int iter = 0; iter < i + 2; iter++) {
+        pixels.clear();
+        switch(i) {
+          case 1 ... 9: {
+            lightHex(numInds[i][1], desert);
+          }
+          case 0:
+          case 10: {
+            lightHex(numInds[i][0], desert);
+          }
+        }
+        pixels.show();
+        delay(flash_time);
+        
+
+        pixels.clear();
+        switch(i) {
+          case 1 ... 9: {
+            lightHex(numInds[i][1], -1);
+          }
+          case 0:
+          case 10: {
+            lightHex(numInds[i][0], -1);
+          }
+        }
+        pixels.show();
+        delay(flash_time);
+      }
+      
+      delay(10 * flash_time);
+    }
+    
+}
+
+void testTiles() {
+  int flash_time = 265;
+  while(1){
+    for (int iter = 0; iter < 19; iter++) {
+      pixels.clear();   
+      lightHex(iter, desert);
+      pixels.show();
+      delay(flash_time);
+      
+
+      pixels.clear();
+      lightHex(iter, -1);
+      pixels.show();
+      delay(flash_time/4);
+    }
+  }
 }
 
 void initPlayers() {
@@ -175,11 +315,14 @@ void setup() {
     Serial.begin(9600);
     pixels.begin();
 
+
     board_state = initBoard();
 
     initDict(dict, board_state);
     initPins();
-    //initRing();
+
+    //testTiles();
+    //layTilesAndNums();
     
     initPlayers();
     
@@ -462,7 +605,7 @@ playerOnVertex_t playerOnVertex(building_t type) {
 
 void passOutCards (int diceRollTotal) {
     for (int i = 0; i < 19; i++) {
-        if (board_state->tiles[i].num == diceRollTotal) {
+        if (board_state->tiles[i].num == diceRollTotal && pollReedSwitch() != i) {
             switch (board_state->tiles[i].type) {
                 case (desert):
                     break;
@@ -566,7 +709,6 @@ void loop() {
       }
       if(readDice) {
         // Set the player resource variables in this function
-        // NEED TO CALL pollReedSwitch to check where robber is in here
         passOutCards(diceRollTotal);
 
         // Send the message with the cards
@@ -599,6 +741,10 @@ void loop() {
 
     // update Edges based on active pressed
     if (activeEdge != NULL && edgeOrVertexPressed) {
+        // Serial.print("Edge ");
+        // Serial.print(activeEdge[0]);
+        // Serial.print(" ");
+        // Serial.println(activeEdge[1]);
         // Tile1, Edge1, Tile2, Edge2    
         if (activeEdge[0] != -1) {
             building_t roadType1 = board_state->tiles[activeEdge[0]].edges[activeEdge[1]].type;
@@ -813,4 +959,3 @@ void updatePixelColors() {
     }
   pixels.show();
 }
-
