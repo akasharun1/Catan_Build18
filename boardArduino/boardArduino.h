@@ -6,9 +6,6 @@
 #define NEOPIN 22
 #define NUMPIXELS 6 * 33
 
-
-
-
 #define PLAYER0 60
 
 #define REEDSW_X0 11

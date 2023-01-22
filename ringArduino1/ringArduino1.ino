@@ -39,6 +39,8 @@ enum ControllerColors {
 #define SWITCH_DOWN 11
 #define STEPSIZE 4
 
+#define END_TURN 8
+
 // Change these two numbers to the pins connected to your encoder.
 //   Best Performance: both pins have interrupt capability
 //   Good Performance: only the first pin has interrupt capability
@@ -51,8 +53,6 @@ Encoder myEnc(ENC_CLK,ENC_DT);
 LedControl lc = LedControl(DataIn, Clk, CS, ChainLength);
 
 
-char endTurnButtonState;
-char diceRollReadButtonState;
 char woodCount;
 char sheepCount;
 char clayCount;
@@ -64,9 +64,21 @@ char encoderRotaryState;
 char sevenSegVal;
 size_t oldPosition  = -999;
 
+bool endTurnButtonState = false;
+bool prevEndTurnButtonState = false;
+bool endTurn = false;
+
+bool diceRollButtonState = false;
+bool prevDiceRollButtonState = false;
+bool readDice = false;
+
+bool leverButtonState = false;
+bool prevLeverButtonState = false;
+bool readLever = false;
+
 void setup() {
   Serial.begin(9600);
-  endTurnSwitchState = 0x0;
+  
  //Serial.println("Basic Encoder Test:");
 
 
@@ -91,7 +103,7 @@ void setup() {
     lc.setIntensity(dsp, 2); // Set brightness to a lower level (1-15)
     lc.clearDisplay(dsp);   // Clear the display
   }
-
+  //Serial.println("Setup finished");
 
 }
 
@@ -99,7 +111,6 @@ void loop() {
   size_t newPosition = myEnc.read();
   if (newPosition != oldPosition) {
     oldPosition = newPosition;
-    //Serial.println(newPosition);
   }
 
   lc.setDigit(0, LEDSIZE - 1, woodCount, (newPosition/STEPSIZE) % 5 == 0);
@@ -107,12 +118,19 @@ void loop() {
   lc.setDigit(0, LEDSIZE - 3, sheepCount, (newPosition/STEPSIZE) % 5 == 2);
   lc.setDigit(0, LEDSIZE - 4, wheatCount, (newPosition/STEPSIZE) % 5 == 3);
   lc.setDigit(0, LEDSIZE - 5, rockCount, (newPosition/STEPSIZE) % 5 == 4);
+  
+  Serial.print((int)rockCount);
+  Serial.print(" ");
+  Serial.print((int)wheatCount);
+  Serial.print(" ");
+  Serial.print((int)sheepCount);
+  Serial.print(" ");
+  Serial.print((int)clayCount);
+  Serial.print(" ");
+  Serial.println((int)woodCount);
 
   int messageLengthCount = 0;
 
-//  while(Serial.available() > 0) {
-//    Serial.write(Serial.read());
-//  }
   char buf[64];
   int iter = 0;
   int currRead = 0;
@@ -128,18 +146,13 @@ void loop() {
     buf[iter] = currRead;
     iter++;
     while (Serial.available() <= 0);
-    currRead = Serial.read();
-    //Serial.println(currRead);
-    
+    currRead = Serial.read();  
   }
   buf[iter] = 'e';
   iter++;
 
-  //Serial.println("Done Reading");
-
   if (iter != 1) {
     buf[iter] = '\0';
-    //Serial.write(buf);
 
     for (int i = 0; i < iter; i++) {
       if (buf[i] == RingArduinoCode && iter >= i + 6) {
@@ -148,23 +161,91 @@ void loop() {
         clayCount = (clayCount + buf[i+3]) % 10;
         wheatCount = (wheatCount + buf[i+4]) % 10;
         rockCount = (rockCount + buf[i+5]) % 10;
-        buf[i+6] = endTurnButtonState;
-        buf[i+7] = diceRollReadButtonState;
+        buf[i+6] = endTurn;
+        buf[i+7] = readDice;
+        endTurn = false;
+        readDice = false;
         break;
       }
     }
-    Serial.write(buf);
+    //Serial.write(buf);
   }
+
+  bool leverUp = digitalRead(SWITCH_UP) == LOW;
+  bool leverDown = digitalRead(SWITCH_DOWN) == LOW;
+  leverButtonState = leverUp || leverDown;
+  if (leverButtonState != prevLeverButtonState) {
+    if (leverButtonState == false) {
+        readLever = true;
+    }
+  }
+  prevLeverButtonState = leverButtonState;
 
   // code for Switch
-  if (digitalRead(SWITCH_UP) == LOW) {
-    Serial.println("UP");
+  if (leverUp && readLever) {
+    switch ((newPosition/STEPSIZE) % 5) {
+      case (0): {
+        woodCount++;
+        break;
+      }
+      case (1): {
+        clayCount++;
+         break;
+      }
+      case (2): {
+        sheepCount++;
+         break;
+      }
+      case (3): {
+        wheatCount++;
+         break;
+      }
+      case (4): {
+        rockCount++;
+         break;
+      }
+    }
+    readLever = false;
   }
-  else if (digitalRead(SWITCH_DOWN) == LOW) {
-    Serial.println("DOWN");
-  }
-  else {
-    Serial.println("NONE");
+  else if (leverDown && readLever) {
+    switch ((newPosition/STEPSIZE) % 5) {
+      case (0): {
+         woodCount = woodCount == 0 ? 0 : woodCount - 1;
+         break;
+      }
+      case (1): {
+        clayCount = clayCount == 0 ? 0 : clayCount - 1;
+         break;
+      }
+      case (2): {
+        sheepCount = sheepCount == 0 ? 0 : sheepCount - 1;
+         break;
+      }
+      case (3): {
+        wheatCount = wheatCount == 0 ? 0 : wheatCount - 1;
+         break;
+      }
+      case (4): {
+        rockCount = rockCount == 0 ? 0 : rockCount - 1;
+        break;
+      }
+    }
+    readLever = false;
   }
 
+  endTurnButtonState = digitalRead(END_TURN);
+  if (endTurnButtonState != prevEndTurnButtonState) {
+    if (endTurnButtonState == false) {
+        endTurn = true;
+    }
+  }
+  prevEndTurnButtonState = endTurnButtonState;
+  
+  diceRollButtonState = digitalRead(ENC_SW);
+  if (diceRollButtonState != prevDiceRollButtonState) {
+    if (diceRollButtonState == false) {
+        readDice = true;
+    }
+  }
+  prevDiceRollButtonState = diceRollButtonState;
 }

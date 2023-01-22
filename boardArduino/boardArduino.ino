@@ -310,6 +310,7 @@ void layTilesAndNums() {
 void testTiles() {
   int flash_time = 265;
   while(1){
+    Serial.print("testing");
     for (int iter = 0; iter < 19; iter++) {
       pixels.clear();   
       lightHex(iter, sheep);
@@ -348,8 +349,8 @@ void setup() {
     initDict(dict, board_state);
     initPins();
 
-    //testTiles();
-    layTilesAndNums();
+    testTiles();
+    //layTilesAndNums();
     
     initPlayers();
     
@@ -683,6 +684,8 @@ bool edgeOrVertexPressed = false;
 bool prevEdgeOrVertexPressed = false;
 bool readDice = false;
 bool prevDiceRollButtonState = false;
+
+int turn_num = 0;
     
 void loop() {
     // while(1) {
@@ -700,15 +703,15 @@ void loop() {
     //     Serial.print("Robber value is ");
     //     Serial.println(val);
     // }
-    // if((res = testEdges()) != NULL) {
-    //     Serial.print("EDGEX, EDGEY: ");
-    //     Serial.print(res[0]);
-    //     Serial.print(", ");
-    //     Serial.println(res[1]);
+    if((res = testEdges()) != NULL) {
+        Serial.print("EDGEX, EDGEY: ");
+        Serial.print(res[0]);
+        Serial.print(", ");
+        Serial.println(res[1]);
 
-    //     free(res);
-    //     res = NULL;
-    // }
+        free(res);
+        res = NULL;
+    }
     // if((res = testVertices()) != NULL) {
     //     Serial.print("VERTX, VERTY: ");
     //     Serial.print(res[0]);
@@ -735,7 +738,7 @@ void loop() {
       for (int i = 0; i < diceAval; i++) {
           diceRollTotal = Serial2.read();
       }
-      if(readDice) {
+      if(readDice && turn_num > 7) {
         // Set the player resource variables in this function
         passOutCards(diceRollTotal);
 
@@ -746,11 +749,18 @@ void loop() {
     }
 
     
-    
     if (endTurnButtonState) {
       // Add reverse turn order here
       endTurnButtonState = 0x0;
-      players_move = (players_move == orangeController) ? blueController : players_move + 1;
+      if (turn_num < 3 || turn_num > 7) {
+        players_move = (players_move == orangeController) ? blueController : players_move + 1;
+      } else if (turn_num == 3) {
+        players_move = orangeController;
+      } else {
+        players_move = (players_move == blueController) ? blueController : players_move - 1;
+      }
+ 
+      turn_num = turn_num > 7 ? turn_num : turn_num + 1;
     }
 
     int *activeEdge = pollEdges();
@@ -770,7 +780,7 @@ void loop() {
     // update Edges based on active pressed
     if (activeEdge != NULL && edgeOrVertexPressed) {
         // Serial.print("Edge ");
-        Serial.print(activeEdge[0]);
+        //Serial.print(activeEdge[0]);
         // Serial.print(" ");
         // Serial.println(activeEdge[1]);
         // Tile1, Edge1, Tile2, Edge2    
@@ -791,7 +801,7 @@ void loop() {
         // [Tile1, Vert1, Tile2, Vert2, Tile3, Vert3]
         // Need to figure out which tiles have active vertexes and update all of them
         // for (int i = 0; i < 6; i++) {
-        Serial.println(activeVertex[0]);
+        //Serial.println(activeVertex[0]);
         // }
         if (activeVertex[0] != -1) {          
             building_t buildingType1 = board_state->tiles[activeVertex[0]].vertices[activeVertex[1]].type;
