@@ -13,7 +13,7 @@ enum ControllerColors {
 
 
 // Ring Arduino Specific
-#define RingArduinoCode blueController
+#define RingArduinoCode greenController
 
 // 7-segment Control
 #define DataIn 5
@@ -81,7 +81,7 @@ void setup() {
   // while(1) {
   //   while (Serial.available() > 0) {
   //     Serial.println(Serial.read());
-  //     Serial.println("receiving");
+  //     //Serial.println("receiving");
   //   }
   //   //Serial.println("not receiving");
   // }
@@ -147,8 +147,8 @@ void loop() {
     currRead = 'e';
   } else {
     currRead = Serial.read();
-    Serial.println("receiving");
-  }
+  }  //Serial.println("receiving");
+  
   
   // Message parsing and sending
   while ((currRead != 'e')) {
@@ -177,8 +177,12 @@ void loop() {
         break;
       }
     }
-    Serial.write(buf);
+    //Serial.println(buf);
+    for (int i = 0; i < iter; i++) {
+      Serial.write(buf[i]);
+    }
   }
+  
 
   bool leverUp = digitalRead(SWITCH_UP) == LOW;
   bool leverDown = digitalRead(SWITCH_DOWN) == LOW;
@@ -243,10 +247,10 @@ void loop() {
   }
 
   endTurnButtonState = digitalRead(END_TURN);
-  if (endTurnButtonState == LOW) {
-    delay(40);
-    endTurnButtonState = digitalRead(END_TURN);
-  }
+  // if (endTurnButtonState == LOW) {
+  //   delay(40);
+  //   endTurnButtonState = digitalRead(END_TURN);
+  // }
   if (endTurnButtonState != prevEndTurnButtonState) {
     if (endTurnButtonState == LOW) {
         endTurn = true;
