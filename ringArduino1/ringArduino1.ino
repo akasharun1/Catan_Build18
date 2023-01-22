@@ -37,7 +37,7 @@ enum ControllerColors {
 // Switch Specifics
 #define SWITCH_UP 10
 #define SWITCH_DOWN 11
-#define STEPSIZE 4
+#define STEPSIZE 8
 
 #define END_TURN 8
 
@@ -78,6 +78,13 @@ bool readLever = false;
 
 void setup() {
   Serial.begin(9600);
+  // while(1) {
+  //   while (Serial.available() > 0) {
+  //     Serial.println(Serial.read());
+  //     Serial.println("receiving");
+  //   }
+  //   //Serial.println("not receiving");
+  // }
   
  //Serial.println("Basic Encoder Test:");
 
@@ -86,6 +93,7 @@ void setup() {
   //pinMode(txPin, OUTPUT);
   pinMode(SWITCH_UP, INPUT_PULLUP);
   pinMode(SWITCH_DOWN, INPUT_PULLUP);
+  pinMode(END_TURN, INPUT_PULLUP);
 
   pinMode(ENC_SW, INPUT);
 
@@ -108,7 +116,7 @@ void setup() {
 }
 
 void loop() {
-  size_t newPosition = myEnc.read();
+  size_t newPosition = myEnc.read() + 300;
   if (newPosition != oldPosition) {
     oldPosition = newPosition;
   }
@@ -119,15 +127,15 @@ void loop() {
   lc.setDigit(0, LEDSIZE - 4, wheatCount, (newPosition/STEPSIZE) % 5 == 3);
   lc.setDigit(0, LEDSIZE - 5, rockCount, (newPosition/STEPSIZE) % 5 == 4);
   
-  Serial.print((int)rockCount);
-  Serial.print(" ");
-  Serial.print((int)wheatCount);
-  Serial.print(" ");
-  Serial.print((int)sheepCount);
-  Serial.print(" ");
-  Serial.print((int)clayCount);
-  Serial.print(" ");
-  Serial.println((int)woodCount);
+  // Serial.print((int)rockCount);
+  // Serial.print(" ");
+  // Serial.print((int)wheatCount);
+  // Serial.print(" ");
+  // Serial.print((int)sheepCount);
+  // Serial.print(" ");
+  // Serial.print((int)clayCount);
+  // Serial.print(" ");
+  // Serial.println((int)woodCount);
 
   int messageLengthCount = 0;
 
@@ -139,6 +147,7 @@ void loop() {
     currRead = 'e';
   } else {
     currRead = Serial.read();
+    Serial.println("receiving");
   }
   
   // Message parsing and sending
@@ -168,14 +177,14 @@ void loop() {
         break;
       }
     }
-    //Serial.write(buf);
+    Serial.write(buf);
   }
 
   bool leverUp = digitalRead(SWITCH_UP) == LOW;
   bool leverDown = digitalRead(SWITCH_DOWN) == LOW;
   leverButtonState = leverUp || leverDown;
   if (leverButtonState != prevLeverButtonState) {
-    if (leverButtonState == false) {
+    if (leverButtonState == true) {
         readLever = true;
     }
   }
@@ -234,9 +243,14 @@ void loop() {
   }
 
   endTurnButtonState = digitalRead(END_TURN);
+  if (endTurnButtonState == LOW) {
+    delay(40);
+    endTurnButtonState = digitalRead(END_TURN);
+  }
   if (endTurnButtonState != prevEndTurnButtonState) {
-    if (endTurnButtonState == false) {
+    if (endTurnButtonState == LOW) {
         endTurn = true;
+        //Serial.println("End turn");
     }
   }
   prevEndTurnButtonState = endTurnButtonState;
@@ -245,6 +259,7 @@ void loop() {
   if (diceRollButtonState != prevDiceRollButtonState) {
     if (diceRollButtonState == false) {
         readDice = true;
+        //Serial.println("read dice");
     }
   }
   prevDiceRollButtonState = diceRollButtonState;
